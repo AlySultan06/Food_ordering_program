@@ -81,7 +81,8 @@ int generateOrderID() {  orderCount++; return orderCount; }
 // -----------------------------
 // File I/O Functions
 // -----------------------------
-void saveUsersToFile() {
+void savefile() {
+    //save users
     ofstream file("users.txt");
     file << userCount << endl;
     for (int i = 0; i < userCount; i++) {
@@ -94,25 +95,8 @@ void saveUsersToFile() {
         file << users[i].phone << endl;
     }
     file.close();
-}
 
-void loadUsersFromFile() {
-    ifstream file("users.txt");
-    if (!file) return;
-    file >> userCount; file.ignore();
-    for (int i = 0; i < userCount; i++) {
-        file >> users[i].id; file.ignore();
-        getline(file, users[i].name);
-        getline(file, users[i].email);
-        getline(file, users[i].password);
-        getline(file, users[i].role);
-        getline(file, users[i].address);
-        getline(file, users[i].phone);
-        if (users[i].id > userCount) userCount = users[i].id;
-    }
-}
-
-void saveRestaurantsToFile() {
+    //save restaurants
     ofstream file("restaurants.txt");
     file << restaurantCount << endl;
     for (int i = 0; i < restaurantCount; i++) {
@@ -128,26 +112,10 @@ void saveRestaurantsToFile() {
         file << r.isOpen << endl;
     }
     file.close();
-}
 
-void loadRestaurantsFromFile() {
-    ifstream file("restaurants.txt");
-    if (!file) return;
-    file >> restaurantCount; file.ignore();
-    for (int i = 0; i < restaurantCount; i++) {
-        Restaurant &r = restaurants[i];
-        file >> r.id >> r.ownerID; file.ignore();
-        getline(file, r.name);
-        getline(file, r.location);
-        file >> r.rating >> r.menuItemCount; file.ignore();
-        for (int j = 0; j < r.menuItemCount; j++) file >> r.menuItemIDs[j];
-        file.ignore();
-        file >> r.isOpen; file.ignore();
-        if (r.id > restaurantCount) restaurantCount = r.id;
-    }
-}
 
-void saveMenuItemsToFile() {
+
+    //save menu items
     ofstream file("menuItems.txt");
     file << menuItemCount << endl;
     for (int i = 0; i < menuItemCount; i++) {
@@ -157,21 +125,10 @@ void saveMenuItemsToFile() {
         file << menuItems[i].price << endl;
     }
     file.close();
-}
 
-void loadMenuItemsFromFile() {
-    ifstream file("menuItems.txt");
-    if (!file) return;
-    file >> menuItemCount; file.ignore();
-    for (int i = 0; i < menuItemCount; i++) {
-        file >> menuItems[i].id >> menuItems[i].restaurantID; file.ignore();
-        getline(file, menuItems[i].name);
-        file >> menuItems[i].price; file.ignore();
-        if (menuItems[i].id > menuItemCount) menuItemCount = menuItems[i].id;
-    }
-}
 
-void saveOrdersToFile() {
+
+    //save orders
     ofstream file("orders.txt");
     file << orderCount << endl;
     for (int i = 0; i < orderCount; i++) {
@@ -189,7 +146,51 @@ void saveOrdersToFile() {
     file.close();
 }
 
-void loadOrdersFromFile() {
+
+void loadfiles(){
+    //load users
+    ifstream file("users.txt");
+    if (!file) return;
+    file >> userCount; file.ignore();
+    for (int i = 0; i < userCount; i++) {
+        file >> users[i].id; file.ignore();
+        getline(file, users[i].name);
+        getline(file, users[i].email);
+        getline(file, users[i].password);
+        getline(file, users[i].role);
+        getline(file, users[i].address);
+        getline(file, users[i].phone);
+        if (users[i].id > userCount) userCount = users[i].id;
+    }
+
+    //load restaurants
+    ifstream file("restaurants.txt");
+    if (!file) return;
+    file >> restaurantCount; file.ignore();
+    for (int i = 0; i < restaurantCount; i++) {
+        Restaurant &r = restaurants[i];
+        file >> r.id >> r.ownerID; file.ignore();
+        getline(file, r.name);
+        getline(file, r.location);
+        file >> r.rating >> r.menuItemCount; file.ignore();
+        for (int j = 0; j < r.menuItemCount; j++) file >> r.menuItemIDs[j];
+        file.ignore();
+        file >> r.isOpen; file.ignore();
+        if (r.id > restaurantCount) restaurantCount = r.id;
+    }
+
+    //load menu items
+    ifstream file("menuItems.txt");
+    if (!file) return;
+    file >> menuItemCount; file.ignore();
+    for (int i = 0; i < menuItemCount; i++) {
+        file >> menuItems[i].id >> menuItems[i].restaurantID; file.ignore();
+        getline(file, menuItems[i].name);
+        file >> menuItems[i].price; file.ignore();
+        if (menuItems[i].id > menuItemCount) menuItemCount = menuItems[i].id;
+    }
+
+    //load orders
     ifstream file("orders.txt");
     if (!file) return;
     file >> orderCount; file.ignore();
@@ -216,60 +217,60 @@ void registerUser()
     User u;
     u.id = generateUserID();
 
-    cout << "\nEnter name: ";
+   std:: cout << "\nEnter name: ";
     cin >> u.name;
 
-    cout << "Enter email: ";
+    std ::cout << "Enter email: ";
     cin >> u.email;
 
-    cout << "Enter password: ";
+    std ::cout << "Enter password: ";
     cin >> u.password;
 
-    cout << "Enter address: ";
+    std ::cout << "Enter address: ";
     cin >> u.address;
 
-    cout << "Role (customer/owner): ";
+    std ::cout << "Role (customer/owner): ";
     cin >> u.role;
 
-    cout << "Enter phone number: ";
+    std ::cout << "Enter phone number: ";
     cin >> u.phone;
 
     users[userCount++] = u;
 
-    cout << "\nRegistration successful!\n";
+    std ::cout << "\nRegistration successful!\n";
 }
 
 int loginUser()
 {
     string email, password;
-    cout << "\nEmail: ";
+    std ::cout << "\nEmail: ";
     cin >> email;
-    cout << "Password: ";
+    std ::cout << "Password: ";
     cin >> password;
 
     for (int i = 0; i < userCount; i++)
     {
         if (users[i].email == email && users[i].password == password)
         {
-            cout << "\nLogin successful!\n";
+            std ::cout << "\nLogin successful!\n";
             return users[i].id;
         }
     }
 
-    cout << "\nInvalid credentials.\n";
+    std ::cout << "\nInvalid credentials.\n";
     return -1;
 }
 
 // show menu
 void showMenu(int restrauntId)
 {
-    cout << "\n--- Menu ---\n";
+    std ::cout << "\n--- Menu ---\n";
     for (int i = 0; i < menuItemCount; i++)
     {
         
         if (menuItems[i].restaurantID == restrauntId)
         {
-            cout << menuItems[i].id << ". " << menuItems[i].name << " - $" << menuItems[i].price << "\n";
+            std ::cout << menuItems[i].id << ". " << menuItems[i].name << " - $" << menuItems[i].price << "\n";
         }
     }
 }
@@ -282,22 +283,22 @@ void customerView(int userID)
     int choice;
     do
     {
-        cout << "\n--- Welcome Dear Customer---\n";
-        cout << "1. View Restaurants\n";
-        cout << "2. Logout\n";
-        cout << "Choose: ";
+        std ::cout << "\n--- Welcome Dear Customer---\n";
+        std ::cout << "1. View Restaurants\n";
+        std ::cout << "2. Logout\n";
+        std ::cout << "Choose: ";
         cin >> choice;
 
         if (choice == 1)
         {
-            cout << "\n--- Restaurants ---\n";
+            std ::cout << "\n--- Restaurants ---\n";
             for (int i = 0; i < restaurantCount; i++)
             {
-                cout << restaurants[i].id << ". "
+                std ::cout << restaurants[i].id << ". "
                      << restaurants[i].name << " ("
                      << restaurants[i].location << ")\n";
             }
-            cout << "Choose restaurant ID to view menu: ";
+            std ::cout << "Choose restaurant ID to view menu: ";
             int resID;
             cin >> resID;
             showMenu(resID);
@@ -308,14 +309,14 @@ void customerView(int userID)
 
  void viewrestraunts(){
     for(int i=0; i<restaurantCount; i++){
-        cout << "Restraunt Name: " << restaurants[i].name << endl;
-        cout << "Restraunt Location: " << restaurants[i].location << endl;
-        cout << "Restraunt Rating: " << restaurants[i].rating << endl;
-        cout << "------------------------" << endl;
+        std ::cout << "Restraunt Name: " << restaurants[i].name << endl;
+        std ::cout << "Restraunt Location: " << restaurants[i].location << endl;
+        std ::cout << "Restraunt Rating: " << restaurants[i].rating << endl;
+        std ::cout << "------------------------" << endl;
     }
  }
 void displayMenu(string restrauntname){
-    int id=-1;
+    int id = -1;
     for(int i=0; i<restaurantCount; i++){
         if(restaurants[i].name == restrauntname){
             id = restaurants[i].id;
@@ -323,13 +324,13 @@ void displayMenu(string restrauntname){
         }
     }
     if(id == -1){
-        cout << "Restraunt not found." << endl;
+        std ::cout << "Restraunt not found." << endl;
         return;
     }
-    cout << "Menu for " << restrauntname << ":" << endl;
+    std ::cout << "Menu for " << restrauntname << ":" << endl;
     for(int i=0; i<menuItemCount; i++){
         if(menuItems[i].restaurantID == id){
-            cout << "Item Name: " << menuItems[i].name << ", Price: " << menuItems[i].price << endl;
+            std ::cout << "Item Name: " << menuItems[i].name << ", Price: " << menuItems[i].price << endl;
         }
 }
 }
@@ -340,7 +341,7 @@ void displayMenu(string restrauntname){
 // Create menu items
 void createMenu(int restrauntId, int restrauntMenuItemCount){
     int n;
-    cout << "How many menu items would you like to add? ";
+    std ::cout << "How many menu items would you like to add? ";
     cin >> n;
     for (int i = 0; i < n; i++)
     {
@@ -348,9 +349,9 @@ void createMenu(int restrauntId, int restrauntMenuItemCount){
         MenuItem m;
         m.id = generateMenuItemID();
         m.restaurantID = restrauntId;
-        cout << "Menu item name: ";
+        std ::cout << "Menu item name: ";
         cin >> m.name;
-        cout << "Price: ";
+        std ::cout << "Price: ";
         cin >> m.price;
         menuItems[menuItemCount++] = m;
         
@@ -366,13 +367,13 @@ void createRestraunt(int ownerId){
             r.id = generateRestaurantID();
             r.ownerID = ownerId;
 
-            cout << "\nRestaurant name: ";
+            std ::cout << "\nRestaurant name: ";
             cin >> r.name;
 
-            cout << "Location: ";
+            std ::cout << "Location: ";
             cin >> r.location;
 
-            cout << "Status of restaurant (1 for open, 0 for closed): ";
+            std ::cout << "Status of restaurant (1 for open, 0 for closed): ";
             cin >> r.isOpen;
 
             restaurants[restaurantCount++] = r;
@@ -380,7 +381,7 @@ void createRestraunt(int ownerId){
 
             
 
-            cout << "\nRestaurant created!\n";
+            std ::cout << "\nRestaurant created!\n";
 
 
 }
@@ -389,7 +390,7 @@ void createRestraunt(int ownerId){
 //manage profile
 
 void manageProfile(int ownerId){
-     cout << "\n-- Manage Profile --\n";
+     std ::cout << "\n-- Manage Profile --\n";
             bool hasRestaurant = false;
             for (int i = 0; i < restaurantCount; i++)
             {
@@ -397,16 +398,16 @@ void manageProfile(int ownerId){
                 {
                     hasRestaurant= true;
                     Restaurant r = restaurants[i];
-                    cout << r.id << ". " << r.name << " (" << r.location << ")\n";
+                    std ::cout << r.id << ". " << r.name << " (" << r.location << ")\n";
 
-                    cout << "Choose restaurant ID to view menu: ";
+                    std ::cout << "Choose restaurant ID to view menu: ";
                     int resID;
                     cin >> resID;
                     showMenu(resID);
                 }
                 if (!hasRestaurant)
     {
-        cout << "You have no restaurants.\n";
+        std ::cout << "You have no restaurants.\n";
     }
                
             }
@@ -420,11 +421,11 @@ void ownerView(int userID)
     User owner = users[userID - 1];
     do
     {
-        cout << "\n--- Welcome Dear Owner---\n";
-        cout << "1. Create Restaurant\n";
-        cout << "2. Manage Profile\n";
-        cout << "3. Logout\n";
-        cout << "Choose: ";
+        std ::cout << "\n--- Welcome Dear Owner---\n";
+        std ::cout << "1. Create Restaurant\n";
+        std ::cout << "2. Manage Profile\n";
+        std ::cout << "3. Logout\n";
+        std ::cout << "Choose: ";
         cin >> choice;
 
         if (choice == 1)
@@ -446,11 +447,11 @@ int main()
     // main loop
     while (true)
     {
-        cout << "\n=== Online Food Ordering System ===\n";
-        cout << "1. Register\n";
-        cout << "2. Login\n";
-        cout << "3. Exit\n";
-        cout << "Choose: ";
+        std ::cout << "\n=== Online Food Ordering System ===\n";
+        std ::cout << "1. Register\n";
+        std ::cout << "2. Login\n";
+        std ::cout << "3. Exit\n";
+        std ::cout << "Choose: ";
         cin >> choice;
 
         if (choice == 1)
@@ -483,7 +484,7 @@ int main()
             }
             else
             {
-                cout << "Unsuccesful Login\n";
+                std ::cout << "Unsuccesful Login\n";
             }
         }
         else if (choice == 3)
@@ -492,7 +493,7 @@ int main()
         }
         else
         {
-            cout << "Invalid choice.\n";
+            std ::cout << "Invalid choice.\n";
         }
     }
 }
