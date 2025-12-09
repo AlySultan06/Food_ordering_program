@@ -69,6 +69,13 @@ int menuItemCount = -1;
 Order orders[500];
 int orderCount = -1;
 
+
+int currentUserID;
+//for owners
+int ownerreterauntids[50];
+//for customers
+int selectedrestaurantid;
+
 // -----------------------------
 // Utility Functions
 // -----------------------------
@@ -254,6 +261,7 @@ int loginUser()
         {
             std ::cout << "\nLogin successful!\n";
             return users[i].id;
+            currentUserID = users[i].id;
         }
     }
 
@@ -320,6 +328,7 @@ void displayMenu(string restrauntname){
     for(int i=0; i<restaurantCount; i++){
         if(restaurants[i].name == restrauntname){
             id = restaurants[i].id;
+            selectedrestaurantid = id;
             break;
         }
     }
