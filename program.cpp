@@ -1,5 +1,3 @@
-old program ignore
-
 
 
 #include <iostream>
