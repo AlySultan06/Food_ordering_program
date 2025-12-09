@@ -1,155 +1,340 @@
 #include <iostream>
-#include <cmath>
-#include <fstream>
-#include <iomanip>
-#include <cstring>
-#include <ctime>
-#include <windows.h>
-#include <conio.h>
+#include <string>
 using namespace std;
 
-
-struct user{
+// -----------------------------
+// Structs
+// -----------------------------
+struct User
+{
+    int id;
     string name;
     string email;
     string password;
-    string role;
+    string role; // "customer" or "owner"
     string address;
-    int userID;
+    string phone;
+
+    // For owners
+    int OwnerRestrauntCount = 0; // if owner, number of restaurants owned
 };
-user usersarr[100];
- 
-struct resteraunt{
+
+struct Restaurant
+{
+    int id;
+    int ownerID;
     string name;
     string location;
-    int menuitems[100];
-    float rating;
-    int resterauntID;
-    int ownerID;
-    bool isOpen;
-
+    int rating;
+    int menuItemIDs[50];
+    int menuItemCount = 0;
+    bool isOpen = true;
 };
 
-struct menuitem{
-    string itemName;
-    string description;
-    int itemID;
+struct MenuItem
+{
+    int id;
+    int restaurantID;
+    string name;
     float price;
-    int resterauntID;
-    bool isAvailable;
 };
-struct order{
-    int orderID;
-    int userID;
-    int resterauntID;
-    int numofitems[100];
-    float totalprice;
+
+struct Order
+{
+    int id;
+    int customerID;
+    int restaurantID;
+    int itemIDs[50];
+    int itemCount = 0;
     string status;
-    time_t ordertime;
-    time_t deliverytime;
-    bool cash;
-    bool card;
-
+    string paymentMethod;
+    float totalAmount;
 };
 
-struct review{
-    int reviewID;
-    int userID;
-    int resterauntID;
-    float rating;
-    string comment;
-};
+// -----------------------------
+// Global Arrays AND VARIABLES
+// -----------------------------
+User users[100];
+int userCount = 0;
 
-int lastreviewID = 0;
-int lastorderID = 0;
-int lastmenuitemID = 0;
-int lastresterauntID = 0;
-int lastuserID = 0;
-int generateUserID(){
-    lastuserID++;
-    return lastuserID;
+Restaurant restaurants[50];
+int restaurantCount = 0;
+
+MenuItem menuItems[500];
+int menuItemCount = 0;
+
+Order orders[500];
+int orderCount = 0;
+
+// -----------------------------
+// Utility Functions
+// -----------------------------
+int generateUserID() { return userCount + 1; }
+int generateRestaurantID() { return restaurantCount + 1; }
+int generateMenuItemID() { return menuItemCount + 1; }
+int generateOrderID() { return orderCount + 1; }
+
+// -------------
+// Dual functions
+// -------------
+
+// Registration & Login
+
+void registerUser()
+{
+    User u;
+    u.id = generateUserID();
+
+    cout << "\nEnter name: ";
+    cin >> u.name;
+
+    cout << "Enter email: ";
+    cin >> u.email;
+
+    cout << "Enter password: ";
+    cin >> u.password;
+
+    cout << "Enter address: ";
+    cin >> u.address;
+
+    cout << "Role (customer/owner): ";
+    cin >> u.role;
+
+    cout << "Enter phone number: ";
+    cin >> u.phone;
+
+    users[userCount++] = u;
+
+    cout << "\nRegistration successful!\n";
 }
 
-void saveAllData() {
-    ofstream userFile("users.txt");
-    
-    if (userFile.is_open()) {
-        for (int i = 0; i < lastuserID; i++) {
-            userFile << usersarr[i].userID << " " ;
-            userFile << usersarr[i].name << " " ;
-            userFile << usersarr[i].email << " " ;
-            userFile << usersarr[i].password << " " ;
-            userFile << usersarr[i].role << " " ;
-            userFile << usersarr[i].address << endl; 
+int loginUser()
+{
+    string email, password;
+    cout << "\nEmail: ";
+    cin >> email;
+    cout << "Password: ";
+    cin >> password;
+
+    for (int i = 0; i < userCount; i++)
+    {
+        if (users[i].email == email && users[i].password == password)
+        {
+            cout << "\nLogin successful!\n";
+            return users[i].id;
         }
-        userFile.close();
-        cout << "Users saved." << endl;
+    }
+
+    cout << "\nInvalid credentials.\n";
+    return -1;
+}
+
+// show menu
+void showMenu(int restrauntId)
+{
+    cout << "\n--- Menu ---\n";
+    for (int i = 0; i < menuItemCount; i++)
+    {
+        
+        if (menuItems[i].restaurantID == restrauntId)
+        {
+            cout << menuItems[i].id << ". " << menuItems[i].name << " - $" << menuItems[i].price << "\n";
+        }
     }
 }
 
-void registerowner(){
-    user newowner;
-    newowner.userID = generateUserID();
-    cout << "Enter your name: ";
-    cin >> newowner.name;
-    cout << "Enter your email: ";
-    cin >> newowner.email;
-    cout << "Enter your password: ";
-    cin >> newowner.password;
-    cout << "Enter your address: ";
-    cin >> newowner.address;
-    newowner.role = "owner";
-    // Save owner to database (file or in-memory structure)
-    cout << "Owner registered successfully with ID: " << newowner.userID << endl;
-    usersarr[lastuserID] = newowner;
+// -----------------------------
+// Customer Functions
+// -----------------------------
+void customerView(int userID)
+{
+    int choice;
+    do
+    {
+        cout << "\n--- Welcome Dear Customer---\n";
+        cout << "1. View Restaurants\n";
+        cout << "2. Logout\n";
+        cout << "Choose: ";
+        cin >> choice;
+
+        if (choice == 1)
+        {
+            cout << "\n--- Restaurants ---\n";
+            for (int i = 0; i < restaurantCount; i++)
+            {
+                cout << restaurants[i].id << ". "
+                     << restaurants[i].name << " ("
+                     << restaurants[i].location << ")\n";
+            }
+            cout << "Choose restaurant ID to view menu: ";
+            int resID;
+            cin >> resID;
+            showMenu(resID);
+        }
+
+    } while (choice != 2);
 }
 
-void loadAllData() {
-    // --- 1. LOAD USERS ---
-    ifstream userFile("users.txt");
-    user tempUser;
-    if (userFile.is_open()) {
-        // "While we can successfully read an ID from the file..."
-        while (userFile >>lastuserID) {
-            userFile >> tempUser.name;
-            userFile >> tempUser.email;
-            userFile >> tempUser.password;
-            userFile >> tempUser.role;
-            userFile >> tempUser.address;
-            userFile >> tempUser.userID;
-            lastuserID++;
+// -----------------------------
+// Owner Functions
+// -----------------------------
 
-            if (tempUser.userID > lastuserID) {
-                lastuserID = tempUser.userID;
+// Create menu
+void createMenu(int restrauntId, int restrauntMenuItemCount){
+    int n;
+    cout << "How many menu items would you like to add? ";
+    cin >> n;
+    for (int i = 0; i < n; i++)
+    {
+       
+        MenuItem m;
+        m.id = generateMenuItemID();
+        m.restaurantID = restrauntId;
+        cout << "Menu item name: ";
+        cin >> m.name;
+        cout << "Price: ";
+        cin >> m.price;
+        menuItems[menuItemCount++] = m;
+        
+    }
+}
+
+
+//create restraunt
+
+void createRestraunt(int ownerId){
+
+            Restaurant r;
+            r.id = generateRestaurantID();
+            r.ownerID = ownerId;
+
+            cout << "\nRestaurant name: ";
+            cin >> r.name;
+
+            cout << "Location: ";
+            cin >> r.location;
+
+            cout << "Status of restaurant (1 for open, 0 for closed): ";
+            cin >> r.isOpen;
+
+            restaurants[restaurantCount++] = r;
+            createMenu(r.id, r.menuItemCount);
+
+            
+
+            cout << "\nRestaurant created!\n";
+
+
+}
+
+
+//manage profile
+
+void manageProfile(int ownerId){
+     cout << "\n-- Manage Profile --\n";
+            bool hasRestaurant = false;
+            for (int i = 0; i < restaurantCount; i++)
+            {
+                if (restaurants[i].ownerID == ownerId)
+                {
+                    hasRestaurant= true;
+                    Restaurant r = restaurants[i];
+                    cout << r.id << ". " << r.name << " (" << r.location << ")\n";
+
+                    cout << "Choose restaurant ID to view menu: ";
+                    int resID;
+                    cin >> resID;
+                    showMenu(resID);
+                }
+                if (!hasRestaurant)
+    {
+        cout << "You have no restaurants.\n";
+    }
+               
+            }
+}
+
+
+
+void ownerView(int userID)
+{
+    int choice;
+    User owner = users[userID - 1];
+    do
+    {
+        cout << "\n--- Welcome Dear Owner---\n";
+        cout << "1. Create Restaurant\n";
+        cout << "2. Manage Profile\n";
+        cout << "3. Logout\n";
+        cout << "Choose: ";
+        cin >> choice;
+
+        if (choice == 1)
+        {
+            createRestraunt(owner.id);
+        }
+
+        if (choice == 2)
+        {
+           manageProfile(owner.id);
+        }
+
+    } while (choice != 3);
+}
+
+int main()
+{
+    int choice;
+
+    while (true)
+    {
+        cout << "\n=== Online Food Ordering System ===\n";
+        cout << "1. Register\n";
+        cout << "2. Login\n";
+        cout << "3. Exit\n";
+        cout << "Choose: ";
+        cin >> choice;
+
+        if (choice == 1)
+        {
+            registerUser();
+        }
+
+        else if (choice == 2)
+        {
+            int userID = loginUser();
+
+            if (userID != -1)
+            {
+                // find the role
+                string role;
+                for (int i = 0; i < userCount; i++)
+                {
+                    if (users[i].id == userID)
+                        role = users[i].role;
+                }
+
+                if (role == "customer")
+                {
+                    customerView(userID);
+                }
+                else
+                {
+                    ownerView(userID);
+                }
+            }
+            else
+            {
+                cout << "Unsuccesful Login\n";
             }
         }
-        userFile.close();
-    } else {
-        cout << "No user database found. Starting fresh." << endl;
+        else if (choice == 3)
+        {
+            break;
+        }
+        else
+        {
+            cout << "Invalid choice.\n";
+        }
     }
-}
-
-// bool loginowner(string email, string password){
-//     for(int i=0; i<lastuserID; i++){
-//         if(users[i].email == email && users[i].password == password && users[i].role == "owner"){
-//             cout << "Login successful. Welcome, " << users[i].name << "!" << endl;
-//             return true;
-//         }
-//     }
-//     cout << "Login failed. Please check your credentials." << endl;
-//     return false;
-
-// }
-int main(){
-cout << "Current number of users: " << lastuserID << endl;
-loadAllData();
-registerowner();
-registerowner();
-saveAllData();
-cout << "Current number of users: " << lastuserID << endl;
-
-
-
-
-    return 0;
 }
