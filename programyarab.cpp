@@ -72,15 +72,138 @@ int orderCount = -1;
 // -----------------------------
 // Utility Functions
 // -----------------------------
-int generateUserID() {  
-    userCount++;
-    return userCount; }
-int generateRestaurantID() {  restaurantCount++;
-return restaurantCount; }
-int generateMenuItemID() { menuItemCount++;
- return menuItemCount; }
-int generateOrderID() {  orderCount++;
- return orderCount; }
+int generateUserID() {  userCount++; return userCount; }
+int generateRestaurantID() {  restaurantCount++; return restaurantCount; }
+int generateMenuItemID() { menuItemCount++; return menuItemCount; }
+int generateOrderID() {  orderCount++; return orderCount; }
+
+
+// -----------------------------
+// File I/O Functions
+// -----------------------------
+void saveUsersToFile() {
+    ofstream file("users.txt");
+    file << userCount << endl;
+    for (int i = 0; i < userCount; i++) {
+        file << users[i].id << endl;
+        file << users[i].name << endl;
+        file << users[i].email << endl;
+        file << users[i].password << endl;
+        file << users[i].role << endl;
+        file << users[i].address << endl;
+        file << users[i].phone << endl;
+    }
+    file.close();
+}
+
+void loadUsersFromFile() {
+    ifstream file("users.txt");
+    if (!file) return;
+    file >> userCount; file.ignore();
+    for (int i = 0; i < userCount; i++) {
+        file >> users[i].id; file.ignore();
+        getline(file, users[i].name);
+        getline(file, users[i].email);
+        getline(file, users[i].password);
+        getline(file, users[i].role);
+        getline(file, users[i].address);
+        getline(file, users[i].phone);
+        if (users[i].id > userCount) userCount = users[i].id;
+    }
+}
+
+void saveRestaurantsToFile() {
+    ofstream file("restaurants.txt");
+    file << restaurantCount << endl;
+    for (int i = 0; i < restaurantCount; i++) {
+        Restaurant &r = restaurants[i];
+        file << r.id << endl;
+        file << r.ownerID << endl;
+        file << r.name << endl;
+        file << r.location << endl;
+        file << r.rating << endl;
+        file << r.menuItemCount << endl;
+        for (int j = 0; j < r.menuItemCount; j++) file << r.menuItemIDs[j] << " ";
+        file << endl;
+        file << r.isOpen << endl;
+    }
+    file.close();
+}
+
+void loadRestaurantsFromFile() {
+    ifstream file("restaurants.txt");
+    if (!file) return;
+    file >> restaurantCount; file.ignore();
+    for (int i = 0; i < restaurantCount; i++) {
+        Restaurant &r = restaurants[i];
+        file >> r.id >> r.ownerID; file.ignore();
+        getline(file, r.name);
+        getline(file, r.location);
+        file >> r.rating >> r.menuItemCount; file.ignore();
+        for (int j = 0; j < r.menuItemCount; j++) file >> r.menuItemIDs[j];
+        file.ignore();
+        file >> r.isOpen; file.ignore();
+        if (r.id > restaurantCount) restaurantCount = r.id;
+    }
+}
+
+void saveMenuItemsToFile() {
+    ofstream file("menuItems.txt");
+    file << menuItemCount << endl;
+    for (int i = 0; i < menuItemCount; i++) {
+        file << menuItems[i].id << endl;
+        file << menuItems[i].restaurantID << endl;
+        file << menuItems[i].name << endl;
+        file << menuItems[i].price << endl;
+    }
+    file.close();
+}
+
+void loadMenuItemsFromFile() {
+    ifstream file("menuItems.txt");
+    if (!file) return;
+    file >> menuItemCount; file.ignore();
+    for (int i = 0; i < menuItemCount; i++) {
+        file >> menuItems[i].id >> menuItems[i].restaurantID; file.ignore();
+        getline(file, menuItems[i].name);
+        file >> menuItems[i].price; file.ignore();
+        if (menuItems[i].id > menuItemCount) menuItemCount = menuItems[i].id;
+    }
+}
+
+void saveOrdersToFile() {
+    ofstream file("orders.txt");
+    file << orderCount << endl;
+    for (int i = 0; i < orderCount; i++) {
+        Order &o = orders[i];
+        file << o.id << endl;
+        file << o.customerID << endl;
+        file << o.restaurantID << endl;
+        file << o.itemCount << endl;
+        for (int j = 0; j < o.itemCount; j++) file << o.itemIDs[j] << " ";
+        file << endl;
+        file << o.status << endl;
+        file << o.paymentMethod << endl;
+        file << o.totalAmount << endl;
+    }
+    file.close();
+}
+
+void loadOrdersFromFile() {
+    ifstream file("orders.txt");
+    if (!file) return;
+    file >> orderCount; file.ignore();
+    for (int i = 0; i < orderCount; i++) {
+        Order &o = orders[i];
+        file >> o.id >> o.customerID >> o.restaurantID >> o.itemCount; file.ignore();
+        for (int j = 0; j < o.itemCount; j++) file >> o.itemIDs[j];
+        file.ignore();
+        getline(file, o.status);
+        getline(file, o.paymentMethod);
+        file >> o.totalAmount; file.ignore();
+        if (o.id > orderCount) orderCount = o.id;
+    }
+}
 
 // -------------
 // Dual functions
