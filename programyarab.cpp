@@ -69,6 +69,11 @@ int menuItemCount = -1;
 Order orders[500];
 int orderCount = -1;
 
+// Track last IDs for file I/O
+int lastUserID = 0;
+int lastRestaurantID = 0;
+int lastMenuItemID = 0;
+int lastOrderID = 0;
 
 int currentUserID;
 //for owners
@@ -88,128 +93,127 @@ int generateOrderID() {  orderCount++; return orderCount; }
 // -----------------------------
 // File I/O Functions
 // -----------------------------
-void savefile() {
-    //save users
-    ofstream fileus("users.txt");
-    fileus << userCount << endl;
-    for (int i = 0; i < userCount; i++) {
-        fileus << users[i].id << endl;
-        fileus << users[i].name << endl;
-        fileus << users[i].email << endl;
-        fileus << users[i].password << endl;
-        fileus << users[i].role << endl;
-        fileus << users[i].address << endl;
-        fileus << users[i].phone << endl;
-    }
-    fileus.close();
+void saveAllData() {
+    ofstream file;
 
-    //save restaurants
-    ofstream filers("restaurants.txt");
-    filers << restaurantCount << endl;
+    file.open("users.txt");
+    file << userCount << endl;
+    for (int i = 0; i < userCount; i++) {
+        file << users[i].id << endl;
+        file << users[i].name << endl;
+        file << users[i].email << endl;
+        file << users[i].password << endl;
+        file << users[i].role << endl;
+        file << users[i].address << endl;
+        file << users[i].phone << endl;
+    }
+    file.close();
+
+    file.open("restaurants.txt");
+    file << restaurantCount << endl;
     for (int i = 0; i < restaurantCount; i++) {
         Restaurant &r = restaurants[i];
-        filers << r.id << endl;
-        filers << r.ownerID << endl;
-        filers << r.name << endl;
-        filers << r.location << endl;
-        filers << r.rating << endl;
-        filers << r.menuItemCount << endl;
-        for (int j = 0; j < r.menuItemCount; j++) filers << r.menuItemIDs[j] << " ";
-        filers << endl;
-        filers << r.isOpen << endl;
+        file << r.id << endl;
+        file << r.ownerID << endl;
+        file << r.name << endl;
+        file << r.location << endl;
+        file << r.rating << endl;
+        file << r.menuItemCount << endl;
+        for (int j = 0; j < r.menuItemCount; j++) file << r.menuItemIDs[j] << " ";
+        file << endl;
+        file << r.isOpen << endl;
     }
-    filers.close();
+    file.close();
 
-
-
-    //save menu items
-    ofstream filemi("menuItems.txt");
-    filemi << menuItemCount << endl;
+    file.open("menuItems.txt");
+    file << menuItemCount << endl;
     for (int i = 0; i < menuItemCount; i++) {
-        filemi << menuItems[i].id << endl;
-        filemi << menuItems[i].restaurantID << endl;
-        filemi << menuItems[i].name << endl;
-        filemi << menuItems[i].price << endl;
+        file << menuItems[i].id << endl;
+        file << menuItems[i].restaurantID << endl;
+        file << menuItems[i].name << endl;
+        file << menuItems[i].price << endl;
     }
-    filemi.close();
+    file.close();
 
-
-
-    //save orders
-    ofstream fileor("orders.txt");
-    fileor << orderCount << endl;
+    file.open("orders.txt");
+    file << orderCount << endl;
     for (int i = 0; i < orderCount; i++) {
         Order &o = orders[i];
-        fileor << o.id << endl;
-        fileor << o.customerID << endl;
-        fileor << o.restaurantID << endl;
-        fileor << o.itemCount << endl;
-        for (int j = 0; j < o.itemCount; j++) fileor << o.itemIDs[j] << " ";
-        fileor << endl;
-        fileor << o.status << endl;
-        fileor << o.paymentMethod << endl;
-        fileor << o.totalAmount << endl;
+        file << o.id << endl;
+        file << o.customerID << endl;
+        file << o.restaurantID << endl;
+        file << o.itemCount << endl;
+        for (int j = 0; j < o.itemCount; j++) file << o.itemIDs[j] << " ";
+        file << endl;
+        file << o.status << endl;
+        file << o.paymentMethod << endl;
+        file << o.totalAmount << endl;
     }
-    fileor.close();
+    file.close();
 }
 
+void loadAllData() {
+    ifstream file;
 
-void loadfiles(){
-    //load users
-    ifstream file("users.txt");
-    if (!file) return;
-    file >> userCount; file.ignore();
-    for (int i = 0; i < userCount; i++) {
-        file >> users[i].id; file.ignore();
-        getline(file, users[i].name);
-        getline(file, users[i].email);
-        getline(file, users[i].password);
-        getline(file, users[i].role);
-        getline(file, users[i].address);
-        getline(file, users[i].phone);
-        if (users[i].id > userCount) userCount = users[i].id;
+    file.open("users.txt");
+    if (file) {
+        file >> userCount; file.ignore();
+        for (int i = 0; i < userCount; i++) {
+            file >> users[i].id; file.ignore();
+            getline(file, users[i].name);
+            getline(file, users[i].email);
+            getline(file, users[i].password);
+            getline(file, users[i].role);
+            getline(file, users[i].address);
+            getline(file, users[i].phone);
+            if (users[i].id > lastUserID) lastUserID = users[i].id;
+        }
+        file.close();
     }
 
-    //load restaurants
-    ifstream file("restaurants.txt");
-    if (!file) return;
-    file >> restaurantCount; file.ignore();
-    for (int i = 0; i < restaurantCount; i++) {
-        Restaurant &r = restaurants[i];
-        file >> r.id >> r.ownerID; file.ignore();
-        getline(file, r.name);
-        getline(file, r.location);
-        file >> r.rating >> r.menuItemCount; file.ignore();
-        for (int j = 0; j < r.menuItemCount; j++) file >> r.menuItemIDs[j];
-        file.ignore();
-        file >> r.isOpen; file.ignore();
-        if (r.id > restaurantCount) restaurantCount = r.id;
+    file.open("restaurants.txt");
+    if (file) {
+        file >> restaurantCount; file.ignore();
+        for (int i = 0; i < restaurantCount; i++) {
+            Restaurant &r = restaurants[i];
+            file >> r.id >> r.ownerID; file.ignore();
+            getline(file, r.name);
+            getline(file, r.location);
+            file >> r.rating >> r.menuItemCount; file.ignore();
+            for (int j = 0; j < r.menuItemCount; j++) file >> r.menuItemIDs[j];
+            file.ignore();
+            file >> r.isOpen; file.ignore();
+            if (r.id > lastRestaurantID) lastRestaurantID = r.id;
+        }
+        file.close();
     }
 
-    //load menu items
-    ifstream file("menuItems.txt");
-    if (!file) return;
-    file >> menuItemCount; file.ignore();
-    for (int i = 0; i < menuItemCount; i++) {
-        file >> menuItems[i].id >> menuItems[i].restaurantID; file.ignore();
-        getline(file, menuItems[i].name);
-        file >> menuItems[i].price; file.ignore();
-        if (menuItems[i].id > menuItemCount) menuItemCount = menuItems[i].id;
+    file.open("menuItems.txt");
+    if (file) {
+        file >> menuItemCount; file.ignore();
+        for (int i = 0; i < menuItemCount; i++) {
+            file >> menuItems[i].id >> menuItems[i].restaurantID; file.ignore();
+            getline(file, menuItems[i].name);
+            file >> menuItems[i].price; file.ignore();
+            if (menuItems[i].id > lastMenuItemID) lastMenuItemID = menuItems[i].id;
+        }
+        file.close();
     }
 
-    //load orders
-    ifstream file("orders.txt");
-    if (!file) return;
-    file >> orderCount; file.ignore();
-    for (int i = 0; i < orderCount; i++) {
-        Order &o = orders[i];
-        file >> o.id >> o.customerID >> o.restaurantID >> o.itemCount; file.ignore();
-        for (int j = 0; j < o.itemCount; j++) file >> o.itemIDs[j];
-        file.ignore();
-        getline(file, o.status);
-        getline(file, o.paymentMethod);
-        file >> o.totalAmount; file.ignore();
-        if (o.id > orderCount) orderCount = o.id;
+    file.open("orders.txt");
+    if (file) {
+        file >> orderCount; file.ignore();
+        for (int i = 0; i < orderCount; i++) {
+            Order &o = orders[i];
+            file >> o.id >> o.customerID >> o.restaurantID >> o.itemCount; file.ignore();
+            for (int j = 0; j < o.itemCount; j++) file >> o.itemIDs[j];
+            file.ignore();
+            getline(file, o.status);
+            getline(file, o.paymentMethod);
+            file >> o.totalAmount; file.ignore();
+            if (o.id > lastOrderID) lastOrderID = o.id;
+        }
+        file.close();
     }
 }
 
