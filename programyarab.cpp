@@ -347,9 +347,91 @@ void displayMenu(string restrauntname){
         }
 }
 }
+
+
+ void placeorder(){
+    Order o;
+    o.id = generateOrderID();
+    o.customerID = currentUserID;
+    o.restaurantID = selectedrestaurantid;
+    o.itemCount = 0;
+    o.totalAmount = 0.0;
+
+    string itemname;
+    char more;
+    do{
+        cout << "Enter item name to add to order: ";
+        cin >> itemname;
+        bool found = false;
+        for(int i=0; i<menuItemCount; i++){
+            if(menuItems[i].name == itemname && menuItems[i].restaurantID == selectedrestaurantid){
+                o.itemIDs[o.itemCount++] = menuItems[i].id;
+                o.totalAmount += menuItems[i].price;
+                found = true;
+                break;
+            }
+        }
+        if(!found){
+            cout << "Item not found in the selected restaurant." << endl;
+        }
+        cout << "Add more items? (y/n): ";
+        cin >> more;
+    }while(more == 'y' || more == 'Y');
+
+    o.status = "Placed";
+    orders[orderCount++] = o;
+    cout << "Order placed successfully! Total amount: $" << o.totalAmount << endl;
+    cout << "payment method (Cash/Card): ";
+    cin >> o.paymentMethod;
+ }
 // -----------------------------
 // Owner Functions
 // -----------------------------
+
+void pendingorders(){
+    cout << "Pending Orders:" << endl;
+    for(int i=0; i<orderCount; i++){
+        if(orders[i].status == "Placed"){
+            for(int j=0; j<restaurantCount; j++){
+                if(restaurants[j].id == orders[i].restaurantID && restaurants[j].ownerID == currentUserID){
+                    cout << "Order ID: " << orders[i].id << ", Customer ID: " << orders[i].customerID << ", Total Amount: $" << orders[i].totalAmount << endl;
+                    cout <<"will you accept the order? (y/n): ";
+                    char choice;
+                    cin >> choice;
+                    if(choice == 'y'){
+                        orders[i].status = "preparing";
+                        cout << "Order accepted." << endl;
+                    } else {
+                        orders[i].status = "rejected";
+                        cout << "Order rejected." << endl;
+                        //me7tageen taree2a ne3mel notify lel customer en el order etrefed
+                    }
+                }
+            }
+        }
+    }
+    cout << "display orders waiting for delivery(y/n)" << endl;
+    char choice;
+    cin >> choice;
+    if(choice == 'y'){
+        for(int i=0; i<orderCount; i++){
+            if(orders[i].status == "preparing"){
+                for(int j=0; j<restaurantCount; j++){
+                    if(restaurants[j].id == orders[i].restaurantID && restaurants[j].ownerID == currentUserID){
+                        cout << "Order ID: " << orders[i].id << ", Customer ID: " << orders[i].customerID << ", Total Amount: $" << orders[i].totalAmount << endl;
+                        cout <<"is the order read? (y/n): ";
+                        char delivery;
+                        cin >> delivery;
+                        if(delivery == 'y'){
+                            orders[i].status = "in delivery";
+                            cout << "Order marked as delivered." << endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 // Create menu items
 void createMenu(int restrauntId, int restrauntMenuItemCount){
@@ -456,8 +538,8 @@ void ownerView(int userID)
 
 int main()
 {
-loadfiles();
-registerUser();
+loadAllData();
+// registerUser();
 cout << users[0].name << endl;
 cout << users[1].name << endl;
     //int choice;
@@ -513,5 +595,5 @@ cout << users[1].name << endl;
     //         cout << "Invalid choice.\n";
     //     }
     // }
-savefile();
+saveAllData();
 }
