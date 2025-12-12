@@ -387,15 +387,17 @@ void displayMenu(string restrauntname){
 // -----------------------------
 // Owner Functions
 // -----------------------------
-
+// for owner to view pending orders
 void pendingorders(){
     cout << "Pending Orders:" << endl;
+    //shows all pending orders for the owner's restaurants
     for(int i=0; i<orderCount; i++){
         if(orders[i].status == "Placed"){
             for(int j=0; j<restaurantCount; j++){
                 if(restaurants[j].id == orders[i].restaurantID && restaurants[j].ownerID == currentUserID){
                     cout << "Order ID: " << orders[i].id << ", Customer ID: " << orders[i].customerID << ", Total Amount: $" << orders[i].totalAmount << endl;
                     cout <<"will you accept the order? (y/n): ";
+                    // accept or reject order
                     char choice;
                     cin >> choice;
                     if(choice == 'y'){
@@ -410,6 +412,7 @@ void pendingorders(){
             }
         }
     }
+    //shows all orders that are being prepared for delivery
     cout << "display orders waiting for delivery(y/n)" << endl;
     char choice;
     cin >> choice;
@@ -422,6 +425,7 @@ void pendingorders(){
                         cout <<"is the order read? (y/n): ";
                         char delivery;
                         cin >> delivery;
+                        // mark order as prepared and out for delivery
                         if(delivery == 'y'){
                             orders[i].status = "in delivery";
                             cout << "Order marked as delivered." << endl;
