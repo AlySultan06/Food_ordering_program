@@ -348,7 +348,7 @@ void displayMenu(string restrauntname){
 }
 }
 
-
+//for customers to place order
  void placeorder(){
     Order o;
     o.id = generateOrderID();
@@ -383,6 +383,50 @@ void displayMenu(string restrauntname){
     cout << "Order placed successfully! Total amount: $" << o.totalAmount << endl;
     cout << "payment method (Cash/Card): ";
     cin >> o.paymentMethod;
+ }
+
+//for customers to view their current orders
+ void vieworders(){
+    cout << "Your Orders:" << endl;
+    for(int i=0; i<orderCount; i++){
+        if(orders[i].customerID == currentUserID){
+            for(int j=0; j<restaurantCount; j++){
+                if(restaurants[j].id == orders[i].restaurantID){
+                    cout << "Order ID: " << orders[i].id << ", Restaurant: " << restaurants[j].name << ", Status: " << orders[i].status << ", Total Amount: $" << orders[i].totalAmount << endl;
+                    for(int k=0; k<orders[i].itemCount; k++){
+                        for(int m=0; m<menuItemCount; m++){
+                            if(menuItems[m].id == orders[i].itemIDs[k]){
+                                cout << "  - " << menuItems[m].name << " ($" << menuItems[m].price << ")" << endl;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+ }
+// for customers to view past orders
+ void viewpastorders(){
+    cout << "Your Past Orders:" << endl;
+    for(int i=0; i<orderCount; i++){
+        if(orders[i].customerID == currentUserID && (orders[i].status == "delivered" || orders[i].status == "rejected")){
+            for(int j=0; j<restaurantCount; j++){
+                if(restaurants[j].id == orders[i].restaurantID){
+                    cout << "Order ID: " << orders[i].id << ", Restaurant: " << restaurants[j].name << ", Status: " << orders[i].status << ", Total Amount: $" << orders[i].totalAmount << endl;
+                    for(int k=0; k<orders[i].itemCount; k++){
+                        for(int m=0; m<menuItemCount; m++){
+                            if(menuItems[m].id == orders[i].itemIDs[k]){
+                                cout << "  - " << menuItems[m].name << " ($" << menuItems[m].price << ")" << endl;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
  }
 // -----------------------------
 // Owner Functions
