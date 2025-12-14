@@ -87,6 +87,7 @@ void registerUser()
 
     cout << "\nEnter name: ";
     cin >> u.name;
+ 
 
     cout << "Enter email: ";
     cin >> u.email;
