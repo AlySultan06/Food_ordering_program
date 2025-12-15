@@ -1,5 +1,8 @@
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <iomanip>
+#include <cmath>
 using namespace std;
 
 // -----------------------------
@@ -16,7 +19,7 @@ struct User
     string phone;
 
     // For owners
-    int OwnerRestrauntCount = 0; // if owner, number of restaurants owned
+    int OwnerRestrauntCount = 0; // if owner, number of restaurants owned (waht will we use this for?-seif)
 };
 
 struct Restaurant
@@ -55,24 +58,164 @@ struct Order
 // Global Arrays AND VARIABLES
 // -----------------------------
 User users[100];
-int userCount = 0;
+int userCount = -1;
 
 Restaurant restaurants[50];
-int restaurantCount = 0;
+int restaurantCount = -1;
 
 MenuItem menuItems[500];
-int menuItemCount = 0;
+int menuItemCount = -1;
 
 Order orders[500];
-int orderCount = 0;
+int orderCount = -1;
+
+// Track last IDs for file I/O
+int lastUserID = 0;
+int lastRestaurantID = 0;
+int lastMenuItemID = 0;
+int lastOrderID = 0;
+
+int currentUserID;
+//for owners
+int ownerreterauntids[50];
+//for customers
+int selectedrestaurantid;
 
 // -----------------------------
 // Utility Functions
 // -----------------------------
-int generateUserID() { return userCount + 1; }
-int generateRestaurantID() { return restaurantCount + 1; }
-int generateMenuItemID() { return menuItemCount + 1; }
-int generateOrderID() { return orderCount + 1; }
+int generateUserID() {  userCount++; return userCount; }
+int generateRestaurantID() {  restaurantCount++; return restaurantCount; }
+int generateMenuItemID() { menuItemCount++; return menuItemCount; }
+int generateOrderID() {  orderCount++; return orderCount; }
+
+
+// -----------------------------
+// File I/O Functions
+// -----------------------------
+void saveAllData() {
+    ofstream file;
+
+    file.open("users.txt");
+    file << userCount << endl;
+    for (int i = 0; i < userCount; i++) {
+        file << users[i].id << endl;
+        file << users[i].name << endl;
+        file << users[i].email << endl;
+        file << users[i].password << endl;
+        file << users[i].role << endl;
+        file << users[i].address << endl;
+        file << users[i].phone << endl;
+    }
+    file.close();
+
+    file.open("restaurants.txt");
+    file << restaurantCount << endl;
+    for (int i = 0; i < restaurantCount; i++) {
+        Restaurant &r = restaurants[i];
+        file << r.id << endl;
+        file << r.ownerID << endl;
+        file << r.name << endl;
+        file << r.location << endl;
+        file << r.rating << endl;
+        file << r.menuItemCount << endl;
+        for (int j = 0; j < r.menuItemCount; j++) file << r.menuItemIDs[j] << " ";
+        file << endl;
+        file << r.isOpen << endl;
+    }
+    file.close();
+
+    file.open("menuItems.txt");
+    file << menuItemCount << endl;
+    for (int i = 0; i < menuItemCount; i++) {
+        file << menuItems[i].id << endl;
+        file << menuItems[i].restaurantID << endl;
+        file << menuItems[i].name << endl;
+        file << menuItems[i].price << endl;
+    }
+    file.close();
+
+    file.open("orders.txt");
+    file << orderCount << endl;
+    for (int i = 0; i < orderCount; i++) {
+        Order &o = orders[i];
+        file << o.id << endl;
+        file << o.customerID << endl;
+        file << o.restaurantID << endl;
+        file << o.itemCount << endl;
+        for (int j = 0; j < o.itemCount; j++) file << o.itemIDs[j] << " ";
+        file << endl;
+        file << o.status << endl;
+        file << o.paymentMethod << endl;
+        file << o.totalAmount << endl;
+    }
+    file.close();
+}
+
+void loadAllData() {
+    ifstream file;
+
+    file.open("users.txt");
+    if (file) {
+        file >> userCount; file.ignore();
+        for (int i = 0; i < userCount; i++) {
+            file >> users[i].id; file.ignore();
+            getline(file, users[i].name);
+            getline(file, users[i].email);
+            getline(file, users[i].password);
+            getline(file, users[i].role);
+            getline(file, users[i].address);
+            getline(file, users[i].phone);
+            if (users[i].id > lastUserID) lastUserID = users[i].id;
+        }
+        file.close();
+    }
+
+    file.open("restaurants.txt");
+    if (file) {
+        file >> restaurantCount; file.ignore();
+        for (int i = 0; i < restaurantCount; i++) {
+            Restaurant &r = restaurants[i];
+            file >> r.id >> r.ownerID; file.ignore();
+            getline(file, r.name);
+            getline(file, r.location);
+            file >> r.rating >> r.menuItemCount; file.ignore();
+            for (int j = 0; j < r.menuItemCount; j++) file >> r.menuItemIDs[j];
+            file.ignore();
+            file >> r.isOpen; file.ignore();
+            if (r.id > lastRestaurantID) lastRestaurantID = r.id;
+        }
+        file.close();
+    }
+
+    file.open("menuItems.txt");
+    if (file) {
+        file >> menuItemCount; file.ignore();
+        for (int i = 0; i < menuItemCount; i++) {
+            file >> menuItems[i].id >> menuItems[i].restaurantID; file.ignore();
+            getline(file, menuItems[i].name);
+            file >> menuItems[i].price; file.ignore();
+            if (menuItems[i].id > lastMenuItemID) lastMenuItemID = menuItems[i].id;
+        }
+        file.close();
+    }
+
+    file.open("orders.txt");
+    if (file) {
+        file >> orderCount; file.ignore();
+        for (int i = 0; i < orderCount; i++) {
+            Order &o = orders[i];
+            file >> o.id >> o.customerID >> o.restaurantID >> o.itemCount; file.ignore();
+            for (int j = 0; j < o.itemCount; j++) file >> o.itemIDs[j];
+            file.ignore();
+            getline(file, o.status);
+            getline(file, o.paymentMethod);
+            file >> o.totalAmount; file.ignore();
+            if (o.id > lastOrderID) lastOrderID = o.id;
+        }
+        file.close();
+    }
+}
 
 // -------------
 // Dual functions
@@ -87,7 +230,6 @@ void registerUser()
 
     cout << "\nEnter name: ";
     cin >> u.name;
- 
 
     cout << "Enter email: ";
     cin >> u.email;
@@ -123,6 +265,7 @@ int loginUser()
         {
             cout << "\nLogin successful!\n";
             return users[i].id;
+            currentUserID = users[i].id;
         }
     }
 
@@ -176,11 +319,169 @@ void customerView(int userID)
     } while (choice != 2);
 }
 
+ void viewrestraunts(){
+    for(int i=0; i<restaurantCount; i++){
+        cout << "Restraunt Name: " << restaurants[i].name << endl;
+        cout << "Restraunt Location: " << restaurants[i].location << endl;
+        cout << "Restraunt Rating: " << restaurants[i].rating << endl;
+        cout << "------------------------" << endl;
+    }
+ }
+void displayMenu(string restrauntname){
+    int id = -1;
+    for(int i=0; i<restaurantCount; i++){
+        if(restaurants[i].name == restrauntname){
+            id = restaurants[i].id;
+            selectedrestaurantid = id;
+            break;
+        }
+    }
+    if(id == -1){
+        cout << "Restraunt not found." << endl;
+        return;
+    }
+    cout << "Menu for " << restrauntname << ":" << endl;
+    for(int i=0; i<menuItemCount; i++){
+        if(menuItems[i].restaurantID == id){
+            cout << "Item Name: " << menuItems[i].name << ", Price: " << menuItems[i].price << endl;
+        }
+}
+}
+
+//for customers to place order
+ void placeorder(){
+    Order o;
+    o.id = generateOrderID();
+    o.customerID = currentUserID;
+    o.restaurantID = selectedrestaurantid;
+    o.itemCount = 0;
+    o.totalAmount = 0.0;
+
+    string itemname;
+    char more;
+    do{
+        cout << "Enter item name to add to order: ";
+        cin >> itemname;
+        bool found = false;
+        for(int i=0; i<menuItemCount; i++){
+            if(menuItems[i].name == itemname && menuItems[i].restaurantID == selectedrestaurantid){
+                o.itemIDs[o.itemCount++] = menuItems[i].id;
+                o.totalAmount += menuItems[i].price;
+                found = true;
+                break;
+            }
+        }
+        if(!found){
+            cout << "Item not found in the selected restaurant." << endl;
+        }
+        cout << "Add more items? (y/n): ";
+        cin >> more;
+    }while(more == 'y' || more == 'Y');
+
+    o.status = "Placed";
+    orders[orderCount++] = o;
+    cout << "Order placed successfully! Total amount: $" << o.totalAmount << endl;
+    cout << "payment method (Cash/Card): ";
+    cin >> o.paymentMethod;
+ }
+
+//for customers to view their current orders
+ void vieworders(){
+    cout << "Your Orders:" << endl;
+    for(int i=0; i<orderCount; i++){
+        if(orders[i].customerID == currentUserID){
+            for(int j=0; j<restaurantCount; j++){
+                if(restaurants[j].id == orders[i].restaurantID){
+                    cout << "Order ID: " << orders[i].id << ", Restaurant: " << restaurants[j].name << ", Status: " << orders[i].status << ", Total Amount: $" << orders[i].totalAmount << endl;
+                    for(int k=0; k<orders[i].itemCount; k++){
+                        for(int m=0; m<menuItemCount; m++){
+                            if(menuItems[m].id == orders[i].itemIDs[k]){
+                                cout << "  - " << menuItems[m].name << " ($" << menuItems[m].price << ")" << endl;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+ }
+// for customers to view past orders
+ void viewpastorders(){
+    cout << "Your Past Orders:" << endl;
+    for(int i=0; i<orderCount; i++){
+        if(orders[i].customerID == currentUserID && (orders[i].status == "delivered" || orders[i].status == "rejected")){
+            for(int j=0; j<restaurantCount; j++){
+                if(restaurants[j].id == orders[i].restaurantID){
+                    cout << "Order ID: " << orders[i].id << ", Restaurant: " << restaurants[j].name << ", Status: " << orders[i].status << ", Total Amount: $" << orders[i].totalAmount << endl;
+                    for(int k=0; k<orders[i].itemCount; k++){
+                        for(int m=0; m<menuItemCount; m++){
+                            if(menuItems[m].id == orders[i].itemIDs[k]){
+                                cout << "  - " << menuItems[m].name << " ($" << menuItems[m].price << ")" << endl;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+ }
 // -----------------------------
 // Owner Functions
 // -----------------------------
+// for owner to view pending orders
+void pendingorders(){
+    cout << "Pending Orders:" << endl;
+    //shows all pending orders for the owner's restaurants
+    for(int i=0; i<orderCount; i++){
+        if(orders[i].status == "Placed"){
+            for(int j=0; j<restaurantCount; j++){
+                if(restaurants[j].id == orders[i].restaurantID && restaurants[j].ownerID == currentUserID){
+                    cout << "Order ID: " << orders[i].id << ", Customer ID: " << orders[i].customerID << ", Total Amount: $" << orders[i].totalAmount << endl;
+                    cout <<"will you accept the order? (y/n): ";
+                    // accept or reject order
+                    char choice;
+                    cin >> choice;
+                    if(choice == 'y'){
+                        orders[i].status = "preparing";
+                        cout << "Order accepted." << endl;
+                    } else {
+                        orders[i].status = "rejected";
+                        cout << "Order rejected." << endl;
+                        //me7tageen taree2a ne3mel notify lel customer en el order etrefed
+                    }
+                }
+            }
+        }
+    }
+    //shows all orders that are being prepared for delivery
+    cout << "display orders waiting for delivery(y/n)" << endl;
+    char choice;
+    cin >> choice;
+    if(choice == 'y'){
+        for(int i=0; i<orderCount; i++){
+            if(orders[i].status == "preparing"){
+                for(int j=0; j<restaurantCount; j++){
+                    if(restaurants[j].id == orders[i].restaurantID && restaurants[j].ownerID == currentUserID){
+                        cout << "Order ID: " << orders[i].id << ", Customer ID: " << orders[i].customerID << ", Total Amount: $" << orders[i].totalAmount << endl;
+                        cout <<"is the order read? (y/n): ";
+                        char delivery;
+                        cin >> delivery;
+                        // mark order as prepared and out for delivery
+                        if(delivery == 'y'){
+                            orders[i].status = "in delivery";
+                            cout << "Order marked as delivered." << endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
-// Create menu
+// Create menu items
 void createMenu(int restrauntId, int restrauntMenuItemCount){
     int n;
     cout << "How many menu items would you like to add? ";
@@ -285,57 +586,62 @@ void ownerView(int userID)
 
 int main()
 {
-    int choice;
+loadAllData();
+// registerUser();
+cout << users[0].name << endl;
+cout << users[1].name << endl;
+    //int choice;
+    // main loop
+    // while (true)
+    // {
+    //     cout << "\n=== Online Food Ordering System ===\n";
+    //     cout << "1. Register\n";
+    //     cout << "2. Login\n";
+    //     cout << "3. Exit\n";
+    //     cout << "Choose: ";
+    //     cin >> choice;
 
-    while (true)
-    {
-        cout << "\n=== Online Food Ordering System ===\n";
-        cout << "1. Register\n";
-        cout << "2. Login\n";
-        cout << "3. Exit\n";
-        cout << "Choose: ";
-        cin >> choice;
+    //     if (choice == 1)
+    //     {
+    //         registerUser();
+    //     }
 
-        if (choice == 1)
-        {
-            registerUser();
-        }
+    //     else if (choice == 2)
+    //     {
+    //         int userID = loginUser();
 
-        else if (choice == 2)
-        {
-            int userID = loginUser();
+    //         if (userID != -1)
+    //         {
+    //             // find the role
+    //             string role;
+    //             for (int i = 0; i < userCount; i++)
+    //             {
+    //                 if (users[i].id == userID)
+    //                     role = users[i].role;
+    //             }
 
-            if (userID != -1)
-            {
-                // find the role
-                string role;
-                for (int i = 0; i < userCount; i++)
-                {
-                    if (users[i].id == userID)
-                        role = users[i].role;
-                }
-
-                if (role == "customer")
-                {
-                    customerView(userID);
-                }
-                else
-                {
-                    ownerView(userID);
-                }
-            }
-            else
-            {
-                cout << "Unsuccesful Login\n";
-            }
-        }
-        else if (choice == 3)
-        {
-            break;
-        }
-        else
-        {
-            cout << "Invalid choice.\n";
-        }
-    }
+    //             if (role == "customer")
+    //             {
+    //                 customerView(userID);
+    //             }
+    //             else
+    //             {
+    //                 ownerView(userID);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             cout << "Unsuccesful Login\n";
+    //         }
+    //     }
+    //     else if (choice == 3)
+    //     {
+    //         break;
+    //     }
+    //     else
+    //     {
+    //         cout << "Invalid choice.\n";
+    //     }
+    // }
+saveAllData();
 }
