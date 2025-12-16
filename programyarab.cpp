@@ -5,6 +5,7 @@
 #include <cmath>
 using namespace std;
 
+
 // -----------------------------
 // Structs
 // -----------------------------
