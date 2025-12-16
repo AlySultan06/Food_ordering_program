@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iomanip>
 #include <cmath>
+#include "include/raylib.h"
 using namespace std;
 
 
