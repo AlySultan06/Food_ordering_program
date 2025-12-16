@@ -330,7 +330,7 @@ int main(){
     // Main Loop
     while (!WindowShouldClose()) {
         
-        // --- LOGIC & DRAWING ---
+        
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
@@ -429,8 +429,10 @@ int main(){
                 if (GuiButton(Rectangle{350, 50, 200, 40}, "View My Orders")) {
                     currentScreen = SCREEN_CUSTOMER_ORDERS;
                 }
-                if (GuiButton(Rectangle{350, 100, 200, 40}, "view restraunts")) 
+                if (GuiButton(Rectangle{350, 100, 200, 40}, "view restraunts") && !viewresteraunts) 
                     viewresteraunts = true;
+                else if (GuiButton(Rectangle{350, 100, 200, 40}, "hide restraunts") && viewresteraunts) 
+                    viewresteraunts = false;
                 
                 if(viewresteraunts){
                 // Loop through restaurants and draw a button for each
@@ -826,13 +828,12 @@ int main(){
         EndDrawing();
     }
 
-    // 3. Cleanup
-    saveAllData(); // Save files on exit
+
+    saveAllData(); 
     CloseWindow();
-    return 0;
 
 
-
+    
     return 0;
 
 }
