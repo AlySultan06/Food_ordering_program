@@ -586,12 +586,37 @@ void ownerView(int userID)
     } while (choice != 3);
 }
 
-int main()
-{
-loadAllData();
+int main(){
+    InitWindow(800, 600, "Food Ordering System"); 
+    SetTargetFPS(60);
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        DrawText("Welcome to Raylib!", 300, 250, 20, DARKGRAY);
+        DrawText("Press ESC to exit", 320, 280, 15, GRAY);
+
+        // Example Button Logic
+        DrawRectangle(300, 350, 200, 50, LIGHTGRAY);
+        DrawText("LOGIN", 370, 365, 20, BLACK);
+        
+        // Simple click detection
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            Vector2 mouse = GetMousePosition();
+            if (mouse.x > 300 && mouse.x < 500 && mouse.y > 350 && mouse.y < 400) {
+                DrawText("Clicked!", 370, 420, 20, RED);
+            }
+        }
+
+        EndDrawing();
+    }
+
+    // 3. Clean up
+    CloseWindow();
+// loadAllData();
 // registerUser();
-cout << users[0].name << endl;
-cout << users[1].name << endl;
+// cout << users[0].name << endl;
+// cout << users[1].name << endl;
     //int choice;
     // main loop
     // while (true)
@@ -645,5 +670,5 @@ cout << users[1].name << endl;
     //         cout << "Invalid choice.\n";
     //     }
     // }
-saveAllData();
+// saveAllData();
 }
