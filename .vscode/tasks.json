@@ -4,13 +4,26 @@
             "type": "cppbuild",
             "label": "C/C++: g++.exe build active file",
             "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
-            "args": [
-                "-fdiagnostics-color=always",
-                "-g",
-                "${file}",
-                "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
-            ],
+"args": [
+    "-fdiagnostics-color=always",
+    "-g",
+    "${file}",
+    "-o",
+    "${fileDirname}\\${fileBasenameNoExtension}.exe",
+    
+    // 1. Tell it where the Header file is (.h)
+    "-I${fileDirname}/include",
+    
+    // 2. Tell it where the Library file is (.a)
+    "-L${fileDirname}/lib",
+    
+    // 3. Link Raylib
+    "-lraylib",
+    
+    // 4. Link standard Windows requirements (CRITICAL)
+    "-lgdi32",
+    "-lwinmm"
+],
             "options": {
                 "cwd": "${fileDirname}"
             },
