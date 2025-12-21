@@ -426,12 +426,12 @@ int main(){
             case SCREEN_CUSTOMER_DASH:{
                 DrawText("Select a Restaurant:", 50, 60, 30, DARKGRAY);
 
-                if (GuiButton(Rectangle{350, 50, 200, 40}, "View My Orders")) {
+                if (GuiButton(Rectangle{400, 100, 200, 40}, "View My Orders")) {
                     currentScreen = SCREEN_CUSTOMER_ORDERS;
                 }
-                if (GuiButton(Rectangle{350, 100, 200, 40}, "view restraunts") && !viewresteraunts) 
+                if (GuiButton(Rectangle{400, 150, 200, 40}, "view restraunts") && !viewresteraunts) 
                     viewresteraunts = true;
-                else if (GuiButton(Rectangle{350, 100, 200, 40}, "hide restraunts") && viewresteraunts) 
+                else if (GuiButton(Rectangle{400, 150, 200, 40}, "view restraunts") && viewresteraunts) 
                     viewresteraunts = false;
                 
                 if(viewresteraunts){
@@ -452,7 +452,7 @@ int main(){
             // CASE 4: MENU VIEW (Ordering)
             // ---------------------------------------------------------
             case SCREEN_RESTAURANT_MENU:{
-                DrawText("MENU", 50, 60, 30, DARKGRAY);
+                DrawText("MENU", 50, 90, 30, DARKGRAY);
                 if (GuiButton(Rectangle{10, 50, 80, 30}, "Back")) {
                     currentScreen = SCREEN_CUSTOMER_DASH;
                     orderFeedbackTimer = 0; // Reset timer when leaving
@@ -464,7 +464,7 @@ int main(){
                 // -----------------------------------------------------
                 // LEFT SIDE: THE MENU (Select Items)
                 // -----------------------------------------------------
-                DrawText("Click items to add to cart:", 50, 100, 20, GRAY);
+                DrawText("Click items to add to cart:", 50, 130, 20, GRAY);
                 
                 int drawnCount = 0;
                 for (int i = 0; i < menuItemCount; i++) {
@@ -473,7 +473,7 @@ int main(){
                         string itemText = menuItems[i].name + " - $" + to_string((int)menuItems[i].price);
                         
                         // ITEM BUTTON
-                        if (GuiButton(Rectangle{50, (float)(140 + drawnCount * 60), 300, 50}, itemText)) {
+                        if (GuiButton(Rectangle{50, (float)(170 + drawnCount * 60), 300, 50}, itemText)) {
                             // Add to Cart (Limit 50 items)
                             if (cartItemCount < 50) {
                                 cartItemIDs[cartItemCount] = menuItems[i].id;
@@ -765,7 +765,8 @@ int main(){
                         // Find Restaurant Name
                         string rName = "Unknown";
                         for(int r=0; r<restaurantCount; r++) {
-                            if(restaurants[r].id == orders[i].restaurantID) rName = restaurants[r].name;
+                            if(restaurants[r].id == orders[i].restaurantID) 
+                            rName = restaurants[r].name;
                         }
 
                         // Draw Order Box
@@ -789,7 +790,7 @@ int main(){
                 }
 
                 yPos += 20;
-                DrawText("Past History", 50, yPos, 20, DARKGRAY);
+                DrawText("Past orders", 50, yPos, 20, DARKGRAY);
                 yPos += 30;
 
                 // 2. SHOW PAST ORDERS (Delivered, Rejected)
