@@ -57,6 +57,17 @@ struct Order
     float totalAmount;
 };
 
+struct Review
+{
+    int id;
+    int orderID;
+    int customerID;
+    int resterauntID;
+    float rating;
+    string comment;
+
+};
+
 // -----------------------------
 // Global Arrays AND VARIABLES
 // -----------------------------
@@ -72,17 +83,22 @@ int menuItemCount = -1;
 Order orders[500];
 int orderCount = -1;
 
+Review reviews[500];
+int reviewCount =-1;
+
 // Track last IDs for file I/O
 int lastUserID = 0;
 int lastRestaurantID = 0;
 int lastMenuItemID = 0;
 int lastOrderID = 0;
+int lastReviewID = 0;
 
 int currentUserID;
 //for owners
 int ownerreterauntids[50];
 //for customers
 int selectedRestaurantID = -1;
+int selectedorderID;
 
 // -----------------------------
 // Utility Functions
@@ -91,6 +107,7 @@ int generateUserID() {  userCount++; return userCount; }
 int generateRestaurantID() {  restaurantCount++; return restaurantCount; }
 int generateMenuItemID() { menuItemCount++; return menuItemCount; }
 int generateOrderID() {  orderCount++; return orderCount; }
+int generateReviewID(){ reviewCount++; return reviewCount;}
 
 // -----------------------------
 // GUI Functions
@@ -254,6 +271,19 @@ void saveAllData() {
         file << o.totalAmount << endl;
     }
     file.close();
+
+        file.open("reviews.txt");
+    file << reviewCount << endl;
+    for (int i = 0; i < reviewCount; i++) {
+        Review &r = reviews[i];
+        file << r.id << endl;
+        file << r.orderID << endl;
+        file << r.customerID << endl;
+        file << r.rating << endl;
+        file << r.comment << endl;
+        file << r.resterauntID << endl;
+    }
+    file.close();
 }
 
 void loadAllData() {
@@ -319,6 +349,23 @@ void loadAllData() {
         }
         file.close();
     }
+
+        file.open("reviews.txt");
+    if (file) {
+        file >> reviewCount; file.ignore();
+        for (int i = 0; i < reviewCount; i++) {
+            Review &r = reviews[i];
+            file >> r.id >> r.id; file.ignore();
+            file >> r.id >> r.orderID; file.ignore();
+            file >> r.id >> r.customerID; file.ignore();
+            file >> r.id >> r.resterauntID; file.ignore();
+            file >> r.id >> r.rating; file.ignore();
+            getline(file, r.comment);
+            if (r.id > lastReviewID) lastReviewID = r.id;
+        }
+        file.close();
+    }
+    
 }
 
 
@@ -439,7 +486,7 @@ int main(){
                 for (int i = 0; i < restaurantCount; i++) {
                     // Draw each button lower down the screen (y = 120 + i*60)
                     string btnText = restaurants[i].name + " (" + restaurants[i].location + ")";
-                    if (GuiButton((Rectangle{50, (float)(150 + i * 60), 400, 50}), btnText)) {
+                    if (GuiButton((Rectangle{50, (float)(200 + i * 60), 400, 50}), btnText)) {
                         selectedRestaurantID = restaurants[i].id;
                         currentScreen = SCREEN_RESTAURANT_MENU;
                     }
@@ -814,6 +861,9 @@ int main(){
                         DrawText(txt.c_str(), 60, yPos + 20, 18, statusColor);
 
                         yPos += 70;
+                        for(int j=0;j<reviewCount;j++){
+                            
+                        }
                     }
                 }
 
