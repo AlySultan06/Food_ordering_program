@@ -1,11 +1,11 @@
 7
 0
-aly
-lightsteel@
-234
+a;y
+aly@
+1234
 owner
-kl
-010
+madinty
+01012349203
 0
 
 
@@ -15,9 +15,10 @@ kl
 
 2
 seif
-sword
-123
+seif@
+1234
 customer
+<<<<<<< HEAD
 asd
 123
 0
@@ -48,3 +49,7 @@ s2@g
 customer
 bye
 010
+=======
+madia
+010123492
+>>>>>>> aly
