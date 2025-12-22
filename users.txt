@@ -27,7 +27,6 @@ asd
 
 
 
-
 4
 Seif
 s@g
@@ -49,7 +48,3 @@ s2@g
 customer
 bye
 010
-=======
-madia
-010123492
->>>>>>> aly

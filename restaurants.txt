@@ -1,36 +1,9 @@
-<<<<<<< HEAD
-3
-0
-4
-shawerma
-somewhere
-5
-1
-0 
-1
-0
-0
-
-
-0
-0
-
-1
-2
-4
-burger
-somewhere
-5
-1
-2 
-=======
 1
 0
 0
 kfc
 korba
 5
-2
-0 2 
->>>>>>> aly
+0
+
 1

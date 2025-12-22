@@ -67,7 +67,7 @@ User users[100];
 int userCount = -1;
 
 Restaurant restaurants[50];
-int restaurantCount = -1;
+int restaurantCount = 0;
 
 MenuItem menuItems[500];
 int menuItemCount = 0;
@@ -97,7 +97,7 @@ int generateUserID()
 }
 int generateRestaurantID()
 {
-    restaurantCount++;
+  
     return restaurantCount;
 }
 int generateMenuItemID()
