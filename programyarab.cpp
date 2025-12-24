@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <cmath>
@@ -24,7 +23,7 @@ struct User
     string phone;
 
     // For owners
-    int OwnerRestrauntCount = 0; // if owner, number of restaurants owned (waht will we use this for?-seif)
+    int OwnerRestaurantCount = 0;
 };
 
 struct Restaurant
@@ -64,7 +63,7 @@ struct Order
 // Global Arrays AND VARIABLES
 // -----------------------------
 User users[100];
-int userCount = -1;
+int userCount = 0;
 
 Restaurant restaurants[50];
 int restaurantCount = 0;
@@ -75,40 +74,14 @@ int menuItemCount = 0;
 Order orders[500];
 int orderCount = 0;
 
-// Track last IDs for file I/O
-int lastUserID = 0;
-int lastRestaurantID = 0;
-int lastMenuItemID = 0;
-int lastOrderID = 0;
+// variable ids
+int nextUserID = 0;
+int nextRestaurantID = 0;
+int nextMenuItemID = 0;
+int nextOrderID = 0;
 
 int currentUserID;
-// for owners
-int ownerreterauntids[50];
-// for customers
 int selectedRestaurantID = -1;
-
-// -----------------------------
-// Utility Functions
-// -----------------------------
-int generateUserID()
-{
-    userCount++;
-    return userCount;
-}
-int generateRestaurantID()
-{
-  
-    return restaurantCount;
-}
-int generateMenuItemID()
-{
-    
-    return menuItemCount;
-}
-int generateOrderID()
-{
-    return orderCount;
-}
 
 // -----------------------------
 // GUI Functions
@@ -131,28 +104,41 @@ enum GameScreen
 // Start at Login
 GameScreen currentScreen = SCREEN_LOGIN;
 
-// input Buffers
+// text input Buffers
 char nameBuffer[64] = "\0";
 char emailBuffer[64] = "\0";
 char passBuffer[64] = "\0";
 char addressBuffer[64] = "\0";
-char roleBuffer[64] = "\0"; // Type "customer" or "owner"
 char phoneBuffer[64] = "\0";
 char itemNameBuffer[64] = "\0";
 char itemPriceBuffer[64] = "\0";
-
-// Restaurant Creation Buffers
 char restNameBuffer[64] = "\0";
 char restLocBuffer[64] = "\0";
 
-// State Trackers + global vars(the ones that were removed from loop or functions)
+
+//gui variable (would be reset by frame rate if not global variable)
 int activeBoxID = 0;
 int orderFeedbackTimer = 0;
 string lastOrderedItemName = "";
-bool viewresteraunts = true;
-int cartItemIDs[50];
+bool viewRestaurants = true;
+int cartItemIDs[100];
 int cartItemCount = 0;
 float cartTotal = 0.0;
+
+// scroll position for each screen
+float customerDashScroll = 0;
+float restaurantMenuScroll = 0;
+float customerOrdersScroll = 0;
+float ownerViewRestaurantsScroll = 0;
+float ownerOrdersScroll = 0;
+float ownerManageOrdersScroll = 0;
+// scroll constants
+const int ITEM_HEIGHT = 60;
+const int SCROLL_SPEED = 10;
+
+
+// current  role
+bool role = false; // true=owner, false =customer
 
 // draw button function
 bool GuiButton(Rectangle rec, string text)
@@ -180,7 +166,6 @@ bool GuiButton(Rectangle rec, string text)
 }
 
 // A text box that captures typing
-// ID: A unique number for this box so we know which one is active
 void GuiTextBox(Rectangle rec, char *buffer, int bufferSize, int ID, string placeholder)
 {
     bool hover = CheckCollisionPointRec(GetMousePosition(), rec);
@@ -228,6 +213,12 @@ void GuiTextBox(Rectangle rec, char *buffer, int bufferSize, int ID, string plac
         }
     }
 }
+
+//ID generation functions
+int generateUserID() { return nextUserID++; }
+int generateRestaurantID() { return nextRestaurantID++; }
+int generateMenuItemID() { return nextMenuItemID++; }
+int generateOrderID() { return nextOrderID++; }
 
 // -----------------------------
 // File I/O Functions
@@ -315,6 +306,7 @@ void loadAllData()
         for (int i = 0; i < userCount; i++)
         {
             file >> users[i].id;
+            if (users[i].id >= nextUserID) nextUserID = users[i].id + 1;
             file.ignore();
             getline(file, users[i].name);
             getline(file, users[i].email);
@@ -322,8 +314,6 @@ void loadAllData()
             getline(file, users[i].role);
             getline(file, users[i].address);
             getline(file, users[i].phone);
-            if (users[i].id > lastUserID)
-                lastUserID = users[i].id;
         }
         file.close();
     }
@@ -336,7 +326,9 @@ void loadAllData()
         for (int i = 0; i < restaurantCount; i++)
         {
             Restaurant &r = restaurants[i];
-            file >> r.id >> r.ownerID;
+            file >> r.id;
+            if (r.id >= nextRestaurantID) nextRestaurantID = r.id + 1;
+            file >> r.ownerID;
             file.ignore();
             getline(file, r.name);
             getline(file, r.location);
@@ -347,8 +339,6 @@ void loadAllData()
             file.ignore();
             file >> r.isOpen;
             file.ignore();
-            if (r.id > lastRestaurantID)
-                lastRestaurantID = r.id;
         }
         file.close();
     }
@@ -360,13 +350,13 @@ void loadAllData()
         file.ignore();
         for (int i = 0; i < menuItemCount; i++)
         {
-            file >> menuItems[i].id >> menuItems[i].restaurantID;
+            file >> menuItems[i].id;
+            if (menuItems[i].id >= nextMenuItemID) nextMenuItemID = menuItems[i].id + 1;
+            file >> menuItems[i].restaurantID;
             file.ignore();
             getline(file, menuItems[i].name);
             file >> menuItems[i].price;
             file.ignore();
-            if (menuItems[i].id > lastMenuItemID)
-                lastMenuItemID = menuItems[i].id;
         }
         file.close();
     }
@@ -379,13 +369,15 @@ void loadAllData()
         for (int i = 0; i < orderCount; i++)
         {
             Order &o = orders[i];
-            file >> o.id >> o.customerID >> o.restaurantID >> o.itemCount;
+            file >> o.id;
+            if (o.id >= nextOrderID) nextOrderID = o.id + 1;
+            file >> o.customerID >> o.restaurantID >> o.itemCount;
             file.ignore();
 
-            // Read itemIDs first
+            // Read itemIDs
             for (int j = 0; j < o.itemCount; j++)
                 file >> o.itemIDs[j];
-            file.ignore(numeric_limits<streamsize>::max(), '\n'); // ← Skip to end of line
+            file.ignore(numeric_limits<streamsize>::max(), '\n');
 
             // Then read status and payment
             getline(file, o.status);
@@ -394,14 +386,11 @@ void loadAllData()
             // Then total amount
             file >> o.totalAmount;
 
-            // Finally read color (last, as saved)
+            // Finally read color
             int r, g, b, a;
             file >> r >> g >> b >> a;
-            o.statusColor = (Color){(unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a};
+            o.statusColor = Color{(unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a};
             file.ignore();
-
-            if (o.id > lastOrderID)
-                lastOrderID = o.id;
         }
         file.close();
     }
@@ -409,24 +398,24 @@ void loadAllData()
 
 int main()
 {
-    InitWindow(1000, 700, "Food Ordering System"); // create program window
+    InitWindow(1000, 700, "Food Ordering System");
     SetTargetFPS(60);
     loadAllData();
 
     // Main Loop
     while (!WindowShouldClose())
     {
-
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        // Global exit Button (except on login)
+        // Global logout Button (except on login/register)
         if (currentScreen != SCREEN_LOGIN && currentScreen != SCREEN_REGISTER)
         {
             if (GuiButton((Rectangle{10, 10, 80, 30}), "Logout"))
             {
                 currentScreen = SCREEN_LOGIN;
                 activeBoxID = 0;
+                role = false;
             }
         }
 
@@ -465,6 +454,7 @@ int main()
                         // Reset buffers for safety
                         memset(emailBuffer, 0, 64);
                         memset(passBuffer, 0, 64);
+                        break;
                     }
                 }
                 if (!found)
@@ -479,7 +469,9 @@ int main()
                 memset(nameBuffer, 0, 64);
                 memset(emailBuffer, 0, 64);
                 memset(passBuffer, 0, 64);
-                memset(roleBuffer, 0, 64);
+                memset(addressBuffer, 0, 64);
+                memset(phoneBuffer, 0, 64);
+                role = false; // Reset to customer by default
             }
 
             if (activeBoxID == -1)
@@ -499,23 +491,73 @@ int main()
             GuiTextBox((Rectangle{350, 240, 300, 40}), passBuffer, 64, 3, "Password");
             GuiTextBox((Rectangle{350, 300, 300, 40}), addressBuffer, 64, 4, "Address");
             GuiTextBox((Rectangle{350, 360, 300, 40}), phoneBuffer, 64, 5, "Phone");
-            GuiTextBox((Rectangle{350, 420, 300, 40}), roleBuffer, 64, 6, "Role (owner/customer)");
 
-            if (GuiButton((Rectangle{350, 500, 300, 50}), "Complete Registration"))
+            // Role Selection using buttons
+            DrawText("Select Role:", 350, 420, 20, DARKGRAY);
+            
+            // Customer button
+            if (!role)
             {
-                // Logic from old registerUser()
-                User u;
-                u.id = generateUserID();
-                u.name = nameBuffer;
-                u.email = emailBuffer;
-                u.password = passBuffer;
-                u.address = addressBuffer;
-                u.phone = phoneBuffer;
-                u.role = roleBuffer; // "owner" or "customer"
-
-                users[userCount++] = u;       // Add to array
-                currentScreen = SCREEN_LOGIN; // Go back to login
+                DrawRectangle(350, 450, 140, 40, BLUE);
+                DrawText("Customer", 375, 460, 20, WHITE);
             }
+            else
+            {
+                if (GuiButton((Rectangle{350, 450, 140, 40}), "Customer"))
+                    role = false;
+            }
+
+            // Owner button
+            if (role)
+            {
+                DrawRectangle(510, 450, 140, 40, BLUE);
+                DrawText("Owner", 550, 460, 20, WHITE);
+            }
+            else
+            {
+                if (GuiButton((Rectangle{510, 450, 140, 40}), "Owner"))
+                    role = true;
+            }
+
+            if (GuiButton((Rectangle{350, 520, 300, 50}), "Complete Registration"))
+            {
+                // Check if all fields are filled
+                if (strlen(nameBuffer) > 0 && strlen(emailBuffer) > 0 && 
+                    strlen(passBuffer) > 0 && strlen(addressBuffer) > 0 && 
+                    strlen(phoneBuffer) > 0)
+                {
+                    User u;
+                    u.id = generateUserID();
+                    u.name = nameBuffer;
+                    u.email = emailBuffer;
+                    u.password = passBuffer;
+                    u.address = addressBuffer;
+                    u.phone = phoneBuffer;
+                    u.role = role ? "owner" : "customer";
+
+                    // Add to array if there's space
+                    if (userCount < 100)
+                    {
+                        users[userCount++] = u;
+                        currentScreen = SCREEN_LOGIN;
+                        
+                        // Clear all buffers
+                        memset(nameBuffer, 0, 64);
+                        memset(emailBuffer, 0, 64);
+                        memset(passBuffer, 0, 64);
+                        memset(addressBuffer, 0, 64);
+                        memset(phoneBuffer, 0, 64);
+                        role = false;
+                    }
+                }
+                else
+                {
+                    activeBoxID = -2; // Show error
+                }
+            }
+
+            if (activeBoxID == -2)
+                DrawText("Please fill all fields!", 400, 580, 20, RED);
 
             // Cancel button
             if (GuiButton((Rectangle{10, 50, 80, 30}), "Back"))
@@ -530,31 +572,33 @@ int main()
         {
             DrawText("Select a Restaurant:", 50, 60, 30, DARKGRAY);
 
-            if (GuiButton(Rectangle{350, 50, 200, 40}, "View My Orders"))
-            {
+            if (GuiButton(Rectangle{450, 50, 200, 40}, "View My Orders"))
                 currentScreen = SCREEN_CUSTOMER_ORDERS;
-            }
 
-            if (GuiButton(Rectangle{350, 100, 200, 40}, "view/hide restraunts")){
-                viewresteraunts = !viewresteraunts;
-            
-            }
-           
+            if (GuiButton(Rectangle{400, 100, 250, 40}, "View/Hide Restaurants"))
+                viewRestaurants = !viewRestaurants;
 
-
-
-
-            if (viewresteraunts)
+            if (viewRestaurants)
             {
-                // Loop through restaurants and draw a button for each
-                for (int i = 0; i < restaurantCount; i++)
+                if (restaurantCount == 0)
                 {
-                    // Draw each button lower down the screen (y = 120 + i*60)
-                    string btnText = restaurants[i].name + " (" + restaurants[i].location + ")";
-                    if (GuiButton((Rectangle{50, (float)(150 + i * 60), 400, 50}), btnText))
+                    DrawText("No restaurants available", 50, 150, 20, DARKGRAY);
+                }
+                else
+                {
+                    int drawnCount = 0;
+                    for (int i = 0; i < restaurantCount; i++)
                     {
-                        selectedRestaurantID = restaurants[i].id;
-                        currentScreen = SCREEN_RESTAURANT_MENU;
+                        if (restaurants[i].isOpen)
+                        {
+                            string btnText = restaurants[i].name + " (" + restaurants[i].location + ")";
+                            if (GuiButton((Rectangle{50, (float)(150 + drawnCount * 60), 400, 50}), btnText))
+                            {
+                                selectedRestaurantID = restaurants[i].id;
+                                currentScreen = SCREEN_RESTAURANT_MENU;
+                            }
+                            drawnCount++;
+                        }
                     }
                 }
             }
@@ -566,11 +610,11 @@ int main()
         // ---------------------------------------------------------
         case SCREEN_RESTAURANT_MENU:
         {
-            DrawText("MENU", 50, 60, 30, DARKGRAY);
+            DrawText("MENU", 50, 100, 30, DARKGRAY);
             if (GuiButton(Rectangle{10, 50, 80, 30}, "Back"))
             {
                 currentScreen = SCREEN_CUSTOMER_DASH;
-                orderFeedbackTimer = 0; // Reset timer when leaving
+                orderFeedbackTimer = 0;
                 cartItemCount = 0;
                 cartTotal = 0.0;
             }
@@ -578,20 +622,17 @@ int main()
             // -----------------------------------------------------
             // LEFT SIDE: THE MENU (Select Items)
             // -----------------------------------------------------
-            DrawText("Click items to add to cart:", 50, 100, 20, GRAY);
+            DrawText("Click items to add to cart:", 50, 140, 20, GRAY);
 
             int drawnCount = 0;
             for (int i = 0; i < menuItemCount; i++)
             {
                 if (menuItems[i].restaurantID == selectedRestaurantID)
                 {
+                    string itemText = menuItems[i].name + " - $" + to_string(menuItems[i].price).substr(0, 4);
 
-                    string itemText = menuItems[i].name + " - $" + to_string((int)menuItems[i].price);
-
-                    // ITEM BUTTON
-                    if (GuiButton(Rectangle{50, (float)(140 + drawnCount * 60), 300, 50}, itemText))
+                    if (GuiButton(Rectangle{50, (float)(180 + drawnCount * 60), 300, 50}, itemText))
                     {
-                        // Add to Cart (Limit 50 items)
                         if (cartItemCount < 50)
                         {
                             cartItemIDs[cartItemCount] = menuItems[i].id;
@@ -606,30 +647,29 @@ int main()
             // -----------------------------------------------------
             // RIGHT SIDE: YOUR ORDER (The Cart)
             // -----------------------------------------------------
-            int cartX = 550;                                          // Start drawing cart on the right half
-            DrawRectangleLines(cartX - 20, 100, 400, 500, LIGHTGRAY); // Visual Border
+            int cartX = 550;
+            DrawRectangleLines(cartX - 20, 100, 400, 500, LIGHTGRAY);
             DrawText("YOUR ORDER", cartX, 120, 25, DARKGRAY);
 
             int cartY = 160;
 
-            // Loop through cart items to display them
             for (int i = 0; i < cartItemCount; i++)
             {
-                // We have the ID, we need to find the Name/Price
                 for (int m = 0; m < menuItemCount; m++)
                 {
                     if (menuItems[m].id == cartItemIDs[i])
                     {
-                        string line = "- " + menuItems[m].name + " ($" + to_string((int)menuItems[m].price) + ")";
+                        string line = "- " + menuItems[m].name + " ($" + to_string(menuItems[m].price).substr(0, 4) + ")";
                         DrawText(line.c_str(), cartX, cartY, 20, BLACK);
                         cartY += 30;
+                        break;
                     }
                 }
             }
 
             // Show Total
-            DrawRectangle(cartX - 20, 550, 400, 50, LIGHTGRAY); // Background for total
-            string totalTxt = "Total: $" + to_string((int)cartTotal);
+            DrawRectangle(cartX - 20, 550, 400, 50, LIGHTGRAY);
+            string totalTxt = "Total: $" + to_string(cartTotal).substr(0, 6);
             DrawText(totalTxt.c_str(), cartX + 10, 565, 25, BLACK);
 
             // -----------------------------------------------------
@@ -639,33 +679,29 @@ int main()
             {
                 if (GuiButton(Rectangle{(float)cartX, 620, 300, 50}, "Confirm & Place Order"))
                 {
-                    // 1. Create the Final Order
-                    Order o;
-                    o.id = generateOrderID();
-                    o.customerID = currentUserID;
-                    o.restaurantID = selectedRestaurantID;
-                    o.itemCount = cartItemCount;
-                    o.totalAmount = cartTotal;
-                    o.status = "Placed";
-                    o.statusColor = ORANGE;
-                    o.paymentMethod = "Cash";
-
-                    // Copy items from cart to order
-                    for (int k = 0; k < cartItemCount; k++)
+                    if (orderCount < 500)
                     {
-                        o.itemIDs[k] = cartItemIDs[k];
+                        Order o;
+                        o.id = generateOrderID();
+                        o.customerID = currentUserID;
+                        o.restaurantID = selectedRestaurantID;
+                        o.itemCount = cartItemCount;
+                        o.totalAmount = cartTotal;
+                        o.status = "Placed";
+                        o.statusColor = ORANGE;
+                        o.paymentMethod = "Cash";
+
+                        for (int k = 0; k < cartItemCount; k++)
+                            o.itemIDs[k] = cartItemIDs[k];
+
+                        orders[orderCount++] = o;
+
+                        lastOrderedItemName = to_string(cartItemCount) + " Items";
+                        orderFeedbackTimer = 120;
+
+                        cartItemCount = 0;
+                        cartTotal = 0.0;
                     }
-
-                    orders[orderCount] = o;
-                    orderCount++;
-
-                    // 2. Visual Feedback
-                    lastOrderedItemName = to_string(cartItemCount) + " Items"; // Update feedback text
-                    orderFeedbackTimer = 120;                                  // Show popup
-
-                    // 3. Clear Cart
-                    cartItemCount = 0;
-                    cartTotal = 0.0;
                 }
             }
 
@@ -698,19 +734,13 @@ int main()
             }
 
             if (GuiButton((Rectangle{300, 300, 400, 60}), "View Incoming Orders"))
-            {
                 currentScreen = SCREEN_OWNER_ORDERS;
-            }
 
             if (GuiButton((Rectangle{300, 400, 400, 60}), "Manage Orders Status"))
-            {
                 currentScreen = SCREEN_OWNER_MANAGE_ORDERS_STATUS;
-            }
 
             if (GuiButton(Rectangle{300, 500, 400, 60}, "Manage Menus / Add Items"))
-            {
                 currentScreen = SCREEN_OWNER_VIEW_RESTAURANTS;
-            }
         }
         break;
 
@@ -726,17 +756,31 @@ int main()
 
             if (GuiButton((Rectangle{350, 350, 300, 50}), "Save Restaurant"))
             {
-                Restaurant r;
-                r.id = generateRestaurantID();
-                r.ownerID = currentUserID;
-                r.name = restNameBuffer;
-                r.location = restLocBuffer;
-                r.isOpen = true;
-                r.rating = 5;
+                if (strlen(restNameBuffer) > 0 && strlen(restLocBuffer) > 0)
+                {
+                    if (restaurantCount < 50)
+                    {
+                        Restaurant r;
+                        r.id = generateRestaurantID();
+                        r.ownerID = currentUserID;
+                        r.name = restNameBuffer;
+                        r.location = restLocBuffer;
+                        r.isOpen = true;
+                        r.rating = 5;
+                        r.menuItemCount = 0;
 
-                restaurants[restaurantCount++] = r;
-                currentScreen = SCREEN_OWNER_DASH;
+                        restaurants[restaurantCount++] = r;
+                        currentScreen = SCREEN_OWNER_DASH;
+                    }
+                }
+                else
+                {
+                    activeBoxID = -2;
+                }
             }
+
+            if (activeBoxID == -2)
+                DrawText("Please enter restaurant name and location!", 250, 420, 20, RED);
 
             if (GuiButton((Rectangle{10, 50, 80, 30}), "Back"))
                 currentScreen = SCREEN_OWNER_DASH;
@@ -753,6 +797,8 @@ int main()
                 currentScreen = SCREEN_OWNER_DASH;
 
             int orderY = 100;
+            bool hasOrders = false;
+
             for (int i = 0; i < orderCount; i++)
             {
                 bool isMyRestaurant = false;
@@ -761,35 +807,34 @@ int main()
                     if (restaurants[r].id == orders[i].restaurantID && restaurants[r].ownerID == currentUserID)
                     {
                         isMyRestaurant = true;
+                        break;
                     }
                 }
 
                 if (isMyRestaurant && orders[i].status == "Placed")
                 {
-                    string orderTxt = "Order #" + to_string(orders[i].id) + " - $" + to_string((int)orders[i].totalAmount);
+                    hasOrders = true;
+                    string orderTxt = "Order #" + to_string(orders[i].id) + " - $" + to_string(orders[i].totalAmount).substr(0, 6);
                     DrawText(orderTxt.c_str(), 50, orderY, 20, BLACK);
 
-                    // Accept Button
                     if (GuiButton((Rectangle{400, (float)orderY, 100, 30}), "Accept"))
-                    {
                         orders[i].status = "Preparing";
-                    }
-                    // Reject Button
+                    
                     if (GuiButton((Rectangle{520, (float)orderY, 100, 30}), "Reject"))
-                    {
                         orders[i].status = "Rejected";
-                    }
 
                     orderY += 50;
                 }
             }
+
+            if (!hasOrders)
+                DrawText("No incoming orders", 50, 150, 20, GRAY);
         }
         break;
 
-            // ---------------------------------------------------------
-            // CASE 7.5: OWNER MANAGE ORDERS STATUS
-            // ---------------------------------------------------------
-
+        // ---------------------------------------------------------
+        // CASE 7.5: OWNER MANAGE ORDERS STATUS
+        // ---------------------------------------------------------
         case SCREEN_OWNER_MANAGE_ORDERS_STATUS:
         {
             DrawText("MANAGE ORDERS STATUS", 350, 50, 30, DARKGRAY);
@@ -797,6 +842,8 @@ int main()
                 currentScreen = SCREEN_OWNER_DASH;
 
             int orderY = 100;
+            bool hasOrders = false;
+
             for (int i = 0; i < orderCount; i++)
             {
                 bool isMyRestaurant = false;
@@ -805,37 +852,37 @@ int main()
                     if (restaurants[r].id == orders[i].restaurantID && restaurants[r].ownerID == currentUserID)
                     {
                         isMyRestaurant = true;
+                        break;
                     }
                 }
 
                 if (isMyRestaurant && orders[i].status == "Preparing")
                 {
-                    string orderTxt = "Order #" + to_string(orders[i].id) + " - $" + to_string((int)orders[i].totalAmount);
+                    hasOrders = true;
+                    string orderTxt = "Order #" + to_string(orders[i].id) + " - $" + to_string(orders[i].totalAmount).substr(0, 6);
                     DrawText(orderTxt.c_str(), 50, orderY, 20, BLACK);
 
-                    // Upfate status to Ready Button
-                    if (GuiButton((Rectangle{400, (float)orderY, 100, 30}), "Mark as Ready"))
-                    {
+                    if (GuiButton((Rectangle{450, (float)orderY, 200, 30}), "Mark as Ready for delivery"))
                         orders[i].status = "Ready";
-                    }
 
                     orderY += 50;
                 }
 
                 if (isMyRestaurant && orders[i].status == "Ready")
                 {
-                    string orderTxt = "Order #" + to_string(orders[i].id) + " - $" + to_string((int)orders[i].totalAmount);
+                    hasOrders = true;
+                    string orderTxt = "Order #" + to_string(orders[i].id) + " - $" + to_string(orders[i].totalAmount).substr(0, 6);
                     DrawText(orderTxt.c_str(), 50, orderY, 20, BLACK);
 
-                    // Update status to Delivered Button
-                    if (GuiButton((Rectangle{400, (float)orderY, 100, 30}), "Mark as Delivered"))
-                    {
+                    if (GuiButton((Rectangle{450, (float)orderY, 200, 30}), "Mark as Delivered"))
                         orders[i].status = "Delivered";
-                    }
 
                     orderY += 50;
                 }
             }
+
+            if (!hasOrders)
+                DrawText("No orders to manage", 50, 150, 20, GRAY);
         }
         break;
 
@@ -846,7 +893,7 @@ int main()
         {
             DrawText("MY RESTAURANTS", 350, 50, 30, DARKGRAY);
             DrawText("Select a restaurant to add items", 320, 90, 20, GRAY);
-            // Back Button
+            
             if (GuiButton(Rectangle{10, 50, 80, 30}, "Back"))
                 currentScreen = SCREEN_OWNER_DASH;
 
@@ -855,7 +902,6 @@ int main()
 
             for (int i = 0; i < restaurantCount; i++)
             {
-                // Only show restaurants owned by the current user
                 if (restaurants[i].ownerID == currentUserID)
                 {
                     foundAny = true;
@@ -863,22 +909,32 @@ int main()
 
                     if (GuiButton(Rectangle{50, (float)yPos, 400, 50}, btnText))
                     {
-                        selectedRestaurantID = restaurants[i].id; // Remember which one we picked
+                        selectedRestaurantID = restaurants[i].id;
                         currentScreen = SCREEN_OWNER_ADD_MENU_ITEM;
-                        // Clear buffers for the next screen
                         memset(itemNameBuffer, 0, 64);
                         memset(itemPriceBuffer, 0, 64);
                     }
+                    
+                    // Toggle Status Button
+                    string statusText = restaurants[i].isOpen ? "OPEN" : "CLOSED";
+                    Color statusColor = restaurants[i].isOpen ? GREEN : RED;
+                    
+                    Rectangle statusBtn = {500, (float)yPos, 100, 50};
+                    if (GuiButton(statusBtn, statusText))
+                        restaurants[i].isOpen = !restaurants[i].isOpen;
+                    
+                    // Draw status indicator
+                    DrawRectangle(statusBtn.x, statusBtn.y, 10, 50, statusColor);
+
                     yPos += 60;
                 }
             }
 
             if (!foundAny)
-            {
                 DrawText("You haven't created any restaurants yet.", 50, 150, 20, BLACK);
-            }
         }
         break;
+
         // ---------------------------------------------------------
         // CASE 9: ADD MENU ITEMS
         // ---------------------------------------------------------
@@ -886,12 +942,15 @@ int main()
         {
             DrawText("ADD MENU ITEM", 380, 50, 30, DARKGRAY);
 
-            // Find restaurant name for display purposes
+            // Find restaurant name
             string rName = "Unknown";
             for (int i = 0; i < restaurantCount; i++)
             {
                 if (restaurants[i].id == selectedRestaurantID)
+                {
                     rName = restaurants[i].name;
+                    break;
+                }
             }
             DrawText(("Adding to: " + rName).c_str(), 380, 90, 20, GRAY);
 
@@ -902,62 +961,78 @@ int main()
             // Save Button
             if (GuiButton(Rectangle{350, 300, 300, 50}, "Add Item to Menu"))
             {
-                // 1. Create the new item
-                MenuItem m;
-                m.id = generateMenuItemID();
-                m.restaurantID = selectedRestaurantID;
-                m.name = itemNameBuffer;
-
-                // Convert price string to float (simple check)
-
-                m.price = stof(itemPriceBuffer);
-
-                // 2. Add to global menu array
-                menuItems[menuItemCount] = m; 
-                menuItemCount++;
-
-                // 3. Update the Restaurant's internal list (Required for data consistency)
-                for (int i = 0; i < restaurantCount; i++)
+                if (strlen(itemNameBuffer) > 0 && strlen(itemPriceBuffer) > 0)
                 {
-                    if (restaurants[i].id == selectedRestaurantID)
+                    try
                     {
-                        if (restaurants[i].menuItemCount < 50)
+                        float price = stof(itemPriceBuffer);
+                        if (price > 0 && menuItemCount < 500)
                         {
-                            restaurants[i].menuItemIDs[restaurants[i].menuItemCount] = m.id;
-                      
+                            MenuItem m;
+                            m.id = generateMenuItemID();
+                            m.restaurantID = selectedRestaurantID;
+                            m.name = itemNameBuffer;
+                            m.price = price;
+
+                            menuItems[menuItemCount++] = m;
+
+                            // Update restaurant's menu item list
+                            for (int i = 0; i < restaurantCount; i++)
+                            {
+                                if (restaurants[i].id == selectedRestaurantID)
+                                {
+                                    if (restaurants[i].menuItemCount < 50)
+                                    {
+                                        restaurants[i].menuItemIDs[restaurants[i].menuItemCount] = m.id;
+                                        restaurants[i].menuItemCount++;
+                                    }
+                                    break;
+                                }
+                            }
+
+                            memset(itemNameBuffer, 0, 64);
+                            memset(itemPriceBuffer, 0, 64);
+                            activeBoxID = 0;
                         }
-                        break;
+                    }
+                    catch (...)
+                    {
+                        activeBoxID = -2; // Invalid price
                     }
                 }
-
-                // 4. Feedback / Reset
-                memset(itemNameBuffer, 0, 64);
-                memset(itemPriceBuffer, 0, 64);
-                activeBoxID = 0;
+                else
+                {
+                    activeBoxID = -2;
+                }
             }
 
-            // Show existing items briefly below
-            DrawText("Existing Items:", 300, 380, 20, DARKGRAY);
-            int displayY = 410;
-            for (int i = 0; i < menuItemCount; i++)
+            if (activeBoxID == -2)
+                DrawText("Invalid item name or price!", 350, 370, 20, RED);
+
+            // Show existing items
+            DrawText("Existing Items:", 300, 400, 20, DARKGRAY);
+            int displayY = 430;
+            int itemCount = 0;
+            for (int i = 0; i < menuItemCount && itemCount < 10; i++)
             {
                 if (menuItems[i].restaurantID == selectedRestaurantID)
                 {
-
-
-                    string listing = menuItems[i].name + " - $" + to_string((int)menuItems[i].price);
+                    string listing = menuItems[i].name + " - $" + to_string(menuItems[i].price).substr(0, 4);
                     DrawText(listing.c_str(), 300, displayY, 20, GRAY);
                     displayY += 25;
-                    if (displayY > 650)
-                        break; // Stop drawing if we run off screen
+                    itemCount++;
                 }
             }
+
+            if (itemCount == 0)
+                DrawText("No items yet", 300, displayY, 20, LIGHTGRAY);
 
             // Back Button
             if (GuiButton(Rectangle{10, 50, 80, 30}, "Back"))
                 currentScreen = SCREEN_OWNER_VIEW_RESTAURANTS;
         }
         break;
+
         // ---------------------------------------------------------
         // CASE 10: CUSTOMER VIEW ORDERS
         // ---------------------------------------------------------
@@ -970,17 +1045,15 @@ int main()
             int yPos = 100;
             bool foundAny = false;
 
-            // Headers
+            // Current Orders
             DrawText("Current Orders", 50, yPos, 20, DARKGRAY);
             yPos += 30;
 
-            // 1. SHOW CURRENT ORDERS (Preparing, Ready,Delivered)
             for (int i = 0; i < orderCount; i++)
             {
                 if (orders[i].customerID == currentUserID &&
-                    (orders[i].status != "Delivered" && orders[i].status != "Rejected"))
+                    orders[i].status != "Delivered" && orders[i].status != "Rejected")
                 {
-
                     foundAny = true;
 
                     // Find Restaurant Name
@@ -988,7 +1061,10 @@ int main()
                     for (int r = 0; r < restaurantCount; r++)
                     {
                         if (restaurants[r].id == orders[i].restaurantID)
+                        {
                             rName = restaurants[r].name;
+                            break;
+                        }
                     }
 
                     // Draw Order Box
@@ -997,16 +1073,18 @@ int main()
                     string header = "Order #" + to_string(orders[i].id) + " - " + rName;
                     DrawText(header.c_str(), 60, yPos + 10, 20, BLACK);
 
-                    string details = "Total: $" + to_string((int)orders[i].totalAmount) + " | Items: " + to_string(orders[i].itemCount);
+                    string details = "Total: $" + to_string(orders[i].totalAmount).substr(0, 6) + 
+                                   " | Items: " + to_string(orders[i].itemCount);
                     DrawText(details.c_str(), 60, yPos + 35, 18, GRAY);
 
                     // Status Color
-                    orders[i].statusColor = ORANGE; // Default for "Placed"
-                    if (orders[i].status == "Preparing")
+                    if (orders[i].status == "Placed")
+                        orders[i].statusColor = ORANGE;
+                    else if (orders[i].status == "Preparing")
                         orders[i].statusColor = BLUE;
-                    if (orders[i].status == "Ready")
+                    else if (orders[i].status == "Ready")
                         orders[i].statusColor = PURPLE;
-                    if (orders[i].status == "Delivered")
+                    else if (orders[i].status == "Delivered")
                         orders[i].statusColor = GREEN;
 
                     DrawText(("Status: " + orders[i].status).c_str(), 60, yPos + 55, 18, orders[i].statusColor);
@@ -1015,25 +1093,32 @@ int main()
                 }
             }
 
-            yPos += 20;
+            if (!foundAny)
+            {
+                DrawText("No current orders", 50, yPos, 20, GRAY);
+                yPos += 40;
+            }
+
+            // Past Orders
             DrawText("Past History", 50, yPos, 20, DARKGRAY);
             yPos += 30;
 
-            // 2. SHOW PAST ORDERS (Delivered, Rejected)
+            bool foundPast = false;
             for (int i = 0; i < orderCount; i++)
             {
                 if (orders[i].customerID == currentUserID &&
                     (orders[i].status == "Delivered" || orders[i].status == "Rejected"))
                 {
+                    foundPast = true;
 
-                    foundAny = true;
-
-                    // Find Restaurant Name
                     string rName = "Unknown";
                     for (int r = 0; r < restaurantCount; r++)
                     {
                         if (restaurants[r].id == orders[i].restaurantID)
+                        {
                             rName = restaurants[r].name;
+                            break;
+                        }
                     }
 
                     DrawRectangleLines(50, yPos, 500, 60, LIGHTGRAY);
@@ -1047,10 +1132,11 @@ int main()
                 }
             }
 
-            if (!foundAny)
-            {
+            if (!foundPast)
+                DrawText("No past orders", 50, yPos, 20, GRAY);
+
+            if (!foundAny && !foundPast)
                 DrawText("You have no order history.", 50, 150, 20, GRAY);
-            }
         }
         break;
         }
