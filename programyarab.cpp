@@ -1019,6 +1019,49 @@ int main()
                 {
                     string listing = menuItems[i].name + " - $" + to_string(menuItems[i].price).substr(0, 4);
                     DrawText(listing.c_str(), 300, displayY, 20, GRAY);
+                   
+
+
+                   if(GuiButton(Rectangle{600, 430, 80, 30}, "Remove Item")){
+
+                       
+                        for (int j = 0; j < menuItemCount; j++)
+                        {
+                            if (menuItems[j].id == menuItems[i].id)
+                            {
+                               
+                                for (int k = j; k < menuItemCount - 1; k++)
+                                    menuItems[k] = menuItems[k + 1];
+                                menuItemCount--;
+                                break;
+                            }
+                        }
+
+                   
+                        for (int r = 0; r < restaurantCount; r++)
+                        {
+                            if (restaurants[r].id == selectedRestaurantID)
+                            {
+                                for (int m = 0; m < restaurants[r].menuItemCount; m++)
+                                {
+                                    if (restaurants[r].menuItemIDs[m] == menuItems[i].id)
+                                    {
+                                        
+                                        for (int n = m; n < restaurants[r].menuItemCount - 1; n++)
+                                            restaurants[r].menuItemIDs[n] = restaurants[r].menuItemIDs[n + 1];
+                                        restaurants[r].menuItemCount--;
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+
+                        break; 
+                   }
+
+
+
                     displayY += 25;
                     itemCount++;
                 }
